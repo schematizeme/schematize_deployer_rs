@@ -31,6 +31,14 @@ use deployer::cofre;
 /// **Por que o fallback AVISA:** passphrase por pipe fica no histórico do shell e no `ps` de
 /// quem a gerou. Ainda é melhor que não ter caminho nenhum, mas quem usa precisa saber —
 /// silenciar seria dar a garantia sem o suporte dela.
+/// **O quê:** a mesma leitura sem eco, exposta para o `cli::dns`.
+///
+/// **Onde:** `cli::dns`. Reexportada em vez de duplicada: o tratamento de "não há terminal"
+/// custou uma medição para ficar certo, e ter duas cópias é ter uma que envelhece.
+pub(crate) fn ler_passphrase_pub(prompt: &str) -> Result<String, String> {
+    ler_passphrase(prompt)
+}
+
 fn ler_passphrase(prompt: &str) -> Result<String, String> {
     match rpassword::prompt_password(prompt) {
         Ok(p) => Ok(p),

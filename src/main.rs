@@ -51,6 +51,7 @@ fn main() {
         Cmd::Vps { sub } => cli::vps::vps_cmd(sub),
         Cmd::Mcp { sub } => cli::mcp::mcp_cmd(sub),
         Cmd::Cofre { sub } => cli::cofre::cofre_cmd(sub),
+        Cmd::Dns { sub } => cli::dns::dns_cmd(sub),
     };
     if let Err(e) = r {
         eprintln!("erro: {e}");

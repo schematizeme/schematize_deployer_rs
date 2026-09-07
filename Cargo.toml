@@ -1,6 +1,6 @@
 [package]
 name = "schematize-deployer"
-version = "0.2.1"
+version = "0.3.0"
 edition = "2021"
 description = "schematize Deployer: chaves SSH, VPS e acesso remoto AUDITADO, com a credencial fora do alcance do agente. Funciona sozinho; integra-se ao schematize quando os dois convivem."
 license = "MIT"
@@ -41,6 +41,12 @@ getrandom = "0.2"
 # Ler a passphrase SEM eco. Sem isto ela aparece na tela, e daí no screenshot, no
 # compartilhamento de tela e no histórico do terminal de quem colou.
 rpassword = "7"
+# Cliente HTTP EM PROCESSO — e o "em processo" é a razão, não a conveniência.
+# Chamar `curl` com `-H "Authorization: Bearer <token>"` põe o token no argv, e argv é
+# legível por qualquer processo da máquina via `ps` — inclusive o agente que este cofre
+# existe para manter longe do segredo. `ureq` é bloqueante (este app não é async), leva
+# rustls (sem OpenSSL do sistema) e mantém o token dentro do processo.
+ureq = { version = "2", features = ["json", "tls"], default-features = false }
 # Só para devolver o SIGPIPE ao padrão do Unix — ver a nota em `main.rs`.
 [target.'cfg(unix)'.dependencies]
 libc = "0.2"

@@ -8,6 +8,42 @@ CMD deployer cofre status
   SOBRE Mostra onde o cofre está, a permissão do arquivo e a força do KDF com que foi criado
 CMD deployer cofre trocar-senha
   SOBRE Troca a passphrase. Regrava com salt, nonce e custo de KDF novos
+CMD deployer dns
+  SOBRE DNS: gere zonas e registros da Cloudflare, com o token guardado no cofre
+CMD deployer dns add
+  SOBRE Cria um registro
+  ARG conteudo              OBRIGATORIO
+  ARG nome                  OBRIGATORIO
+  ARG proxied              --proxied
+  ARG tipo                  OBRIGATORIO
+  ARG ttl                  --ttl
+  ARG yes                  --yes
+  ARG zona                  OBRIGATORIO
+CMD deployer dns auth
+  SOBRE Guarda o token de API da Cloudflare no cofre (pedido pelo terminal, sem eco)
+  ARG remover              --remover
+  ARG status               --status
+CMD deployer dns list
+  SOBRE Lista os registros de uma zona
+  ARG tipo                 --tipo
+  ARG zona                  OBRIGATORIO
+CMD deployer dns rm
+  SOBRE Remove um registro. SEMPRE pede confirmação (ou `--yes`)
+  ARG nome                  OBRIGATORIO
+  ARG tipo                 --tipo
+  ARG yes                  --yes
+  ARG zona                  OBRIGATORIO
+CMD deployer dns update
+  SOBRE Altera um registro existente, achado por nome
+  ARG conteudo              OBRIGATORIO
+  ARG nome                  OBRIGATORIO
+  ARG proxied              --proxied
+  ARG tipo                 --tipo
+  ARG ttl                  --ttl
+  ARG yes                  --yes
+  ARG zona                  OBRIGATORIO
+CMD deployer dns zones
+  SOBRE Lista as zonas (domínios) da conta
 CMD deployer mcp
   SOBRE MCP: exposes the VPS manager to the agent as typed tools
 CMD deployer mcp install

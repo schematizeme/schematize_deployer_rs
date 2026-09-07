@@ -52,6 +52,82 @@ pub(crate) enum Cmd {
         #[command(subcommand)]
         sub: CofreCmd,
     },
+    /// DNS: gere zonas e registros da Cloudflare, com o token guardado no cofre.
+    Dns {
+        #[command(subcommand)]
+        sub: DnsCmd,
+    },
+}
+
+/// Gestão de DNS na Cloudflare.
+///
+/// O token NUNCA vem por argumento: `ps` mostra argv para qualquer processo do usuário, e o
+/// histórico do shell o guarda. Ele entra uma vez, pelo terminal, e vai para o cofre.
+#[derive(Subcommand)]
+pub(crate) enum DnsCmd {
+    /// Guarda o token de API da Cloudflare no cofre (pedido pelo terminal, sem eco).
+    Auth {
+        /// Só diz SE há token guardado — nunca qual é.
+        #[arg(long)]
+        status: bool,
+        /// Remove o token do cofre.
+        #[arg(long)]
+        remover: bool,
+    },
+    /// Lista as zonas (domínios) da conta.
+    Zones,
+    /// Lista os registros de uma zona.
+    List {
+        /// Nome da zona (ex.: exemplo.com) ou o id de 32 hex.
+        zona: String,
+        /// Só deste tipo (A, CNAME, TXT…).
+        #[arg(long)]
+        tipo: Option<String>,
+    },
+    /// Cria um registro.
+    Add {
+        zona: String,
+        /// A, AAAA, CNAME, TXT, MX…
+        tipo: String,
+        /// Nome do registro (`@` para o apex).
+        nome: String,
+        /// Para onde aponta (IP, host, texto…).
+        conteudo: String,
+        /// TTL em segundos: 1 = automático, ou 60..86400.
+        #[arg(long, default_value_t = 1)]
+        ttl: i64,
+        /// Passa pelo proxy da Cloudflare (só A, AAAA e CNAME).
+        #[arg(long)]
+        proxied: bool,
+        /// Confirma o que a política exigiria confirmar. NÃO destrava o proibido.
+        #[arg(long)]
+        yes: bool,
+    },
+    /// Altera um registro existente, achado por nome.
+    Update {
+        zona: String,
+        nome: String,
+        /// Novo conteúdo.
+        conteudo: String,
+        /// Desambigua quando o nome casa com mais de um registro.
+        #[arg(long)]
+        tipo: Option<String>,
+        #[arg(long)]
+        ttl: Option<i64>,
+        #[arg(long)]
+        proxied: Option<bool>,
+        #[arg(long)]
+        yes: bool,
+    },
+    /// Remove um registro. SEMPRE pede confirmação (ou `--yes`).
+    Rm {
+        zona: String,
+        nome: String,
+        #[arg(long)]
+        tipo: Option<String>,
+        #[arg(long)]
+        yes: bool,
+    },
 }
 
 /// O cofre cifrado. A passphrase NUNCA vem por argumento — `ps` a mostraria para qualquer

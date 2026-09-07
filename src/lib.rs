@@ -23,6 +23,7 @@
 //! [ADR-0010]: ../../schematize_app_archive/decisoes/ADR-0010-deployer-app-separado.md
 
 pub mod cofre;
+pub mod dns;
 pub mod mcp;
 pub mod nucleo;
 pub mod sshkeys;

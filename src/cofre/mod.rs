@@ -20,3 +20,4 @@
 
 pub mod arquivo;
 pub mod cripto;
+pub mod segredos;
