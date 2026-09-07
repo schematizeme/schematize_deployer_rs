@@ -1,6 +1,6 @@
 [package]
 name = "schematize-deployer"
-version = "0.3.0"
+version = "0.4.0"
 edition = "2021"
 description = "schematize Deployer: chaves SSH, VPS e acesso remoto AUDITADO, com a credencial fora do alcance do agente. Funciona sozinho; integra-se ao schematize quando os dois convivem."
 license = "MIT"
@@ -20,6 +20,9 @@ path = "src/main.rs"
 clap = { version = "4", features = ["derive"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+# Encoder PNG — gera o ícone do app A PARTIR DO CÓDIGO, sem asset externo nem
+# rasterizador (que falha em SVG). Mesma escolha do schematize.
+png = "0.18"
 # DB local dos hosts. Mesmas duas formas do schematize: `sqlite-embutido` (default, o que os
 # releases usam — roda em qualquer distro) ou `sqlite-do-sistema` (o certo pra quem compila
 # do fonte na própria máquina; o instalador detecta e escolhe).

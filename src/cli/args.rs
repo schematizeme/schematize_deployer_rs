@@ -57,6 +57,22 @@ pub(crate) enum Cmd {
         #[command(subcommand)]
         sub: DnsCmd,
     },
+    /// Visão geral: o que está configurado e o que dá para fazer. É o que o ícone abre.
+    Painel {
+        /// Espera uma tecla no fim. O lançador do desktop usa isto — sem ele o terminal
+        /// fecharia no mesmo instante e o clique pareceria não ter feito nada.
+        #[arg(long)]
+        aguardar: bool,
+    },
+    /// Ícone e entrada no menu de aplicativos — para abrir o app sem o schematize.
+    Desktop {
+        /// Instala (padrão se nenhuma flag vier).
+        #[arg(long)]
+        instalar: bool,
+        /// Remove a entrada do menu.
+        #[arg(long)]
+        remover: bool,
+    },
 }
 
 /// Gestão de DNS na Cloudflare.

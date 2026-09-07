@@ -8,6 +8,10 @@ CMD deployer cofre status
   SOBRE Mostra onde o cofre está, a permissão do arquivo e a força do KDF com que foi criado
 CMD deployer cofre trocar-senha
   SOBRE Troca a passphrase. Regrava com salt, nonce e custo de KDF novos
+CMD deployer desktop
+  SOBRE Ícone e entrada no menu de aplicativos — para abrir o app sem o schematize
+  ARG instalar             --instalar
+  ARG remover              --remover
 CMD deployer dns
   SOBRE DNS: gere zonas e registros da Cloudflare, com o token guardado no cofre
 CMD deployer dns add
@@ -55,6 +59,9 @@ CMD deployer mcp status
   SOBRE Mostra o estado: servidor registrado? tools liberadas?
 CMD deployer mcp uninstall
   SOBRE Remove o servidor do `.mcp.json` e as permissões do settings.json
+CMD deployer painel
+  SOBRE Visão geral: o que está configurado e o que dá para fazer. É o que o ícone abre
+  ARG aguardar             --aguardar
 CMD deployer ssh
   SOBRE SSH keys: generate, import, list, export and manage keys in ~/.ssh (never leaks the private key)
 CMD deployer ssh authorize

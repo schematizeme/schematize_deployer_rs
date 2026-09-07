@@ -52,6 +52,8 @@ fn main() {
         Cmd::Mcp { sub } => cli::mcp::mcp_cmd(sub),
         Cmd::Cofre { sub } => cli::cofre::cofre_cmd(sub),
         Cmd::Dns { sub } => cli::dns::dns_cmd(sub),
+        Cmd::Painel { aguardar } => cli::painel::painel_cmd(aguardar),
+        Cmd::Desktop { instalar, remover } => cli::painel::desktop_cmd(instalar, remover),
     };
     if let Err(e) = r {
         eprintln!("erro: {e}");
