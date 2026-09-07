@@ -1,0 +1,40 @@
+[package]
+name = "schematize-deployer"
+version = "0.1.0"
+edition = "2021"
+description = "schematize Deployer: chaves SSH, VPS e acesso remoto AUDITADO, com a credencial fora do alcance do agente. Funciona sozinho; integra-se ao schematize quando os dois convivem."
+license = "MIT"
+
+[lib]
+name = "deployer"
+path = "src/lib.rs"
+
+# UM repo, DOIS binários (ADR-0010). No schematize a CLI e a GUI ficaram em repos separados,
+# e isso custa `packaging/gui-pin.txt`, `Cargo.lock` pinado entre repos e `--precise` no
+# release — três mecanismos só para casar as duas metades. Aqui elas se casam por construção.
+[[bin]]
+name = "deployer"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# DB local dos hosts. Mesmas duas formas do schematize: `sqlite-embutido` (default, o que os
+# releases usam — roda em qualquer distro) ou `sqlite-do-sistema` (o certo pra quem compila
+# do fonte na própria máquina; o instalador detecta e escolhe).
+rusqlite = { version = "0.31", default-features = false }
+
+# Perfil de release IDÊNTICO ao dos outros repos do app — e isso não é estética.
+# O install.sh compila todos com um `CARGO_TARGET_DIR` único; cargo só reaproveita
+# um artefato se o perfil bater EXATAMENTE. Qualquer divergência aqui (um `opt-level`
+# que seja) parte o cache compartilhado e a economia evapora.
+[profile.release]
+strip = true
+opt-level = 3
+lto = "thin"
+
+[features]
+default = ["sqlite-embutido"]
+sqlite-embutido = ["rusqlite/bundled"]
+sqlite-do-sistema = []

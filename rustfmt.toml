@@ -1,0 +1,11 @@
+# O rustfmt tem que concordar com o estilo DESTA casa, não o contrário.
+#
+# Com os defaults, `cargo fmt` inflou o crate em ~4700 linhas: quebrou arrays curtos,
+# `match` de uma linha e chamadas que cabiam folgadas em 100 colunas. O `politica.rs`
+# passou de 601 para 949 linhas e estourou o teto de 750 da casa — quer dizer, a
+# formatação automática criaria uma violação de piso onde não havia nenhuma.
+#
+# `use_small_heuristics = "Max"` diz ao rustfmt pra manter na mesma linha tudo que couber
+# dentro do `max_width`, que é exatamente o critério que o código já seguia à mão.
+max_width = 100
+use_small_heuristics = "Max"

@@ -1,0 +1,123 @@
+#!/bin/sh
+# schematize-ops-shell — a FRONTEIRA de verdade do acesso remoto por agente.
+#
+# O QUE: roda como `command=` no ~/.ssh/authorized_keys da chave do agente. Recebe o pedido
+# em $SSH_ORIGINAL_COMMAND, casa contra o catálogo de verbos, loga, e executa SÓ o que casou.
+# Tudo o mais é recusado pelo sshd antes de existir shell nenhum.
+#
+# ONDE: instalado por `schematize vps bootstrap <alias>`, em um de dois lugares:
+#   /usr/local/lib/schematize/ops-shell   (com sudo — dono root, o usuário não reescreve)
+#   $HOME/.schematize/ops-shell           (sem sudo — ainda é fronteira contra o AGENTE)
+#
+# POSIX sh puro, de propósito: o host pode ser Alpine, BSD, ou um sistema mínimo sem bash,
+# sem GNU coreutils e sem python. Software que assume o host do desenvolvedor quebra no
+# primeiro servidor de verdade.
+#
+# NUNCA acrescente aqui um caminho de escape ("se for o usuário X, deixa passar"). O valor
+# inteiro deste arquivo é ele não ter exceção.
+
+set -eu
+
+DIR=$(dirname "$0")
+CATALOGO="$DIR/catalogo"
+
+# O log fica no HOME de QUEM CHAMA, não ao lado do shim.
+#
+# Por quê: no nível `root` o shim mora em /usr/local/lib/schematize (dono root, 0755) e roda
+# como o usuário do serviço — que não pode escrever lá. O log falhava calado (`|| true`)
+# EXATAMENTE no nível mais protegido, e o log do host é um controle independente do cliente:
+# se ele some, sobra a palavra do cliente sobre o que rodou. Achado no Q.A. contra sshd real.
+#
+# De quebra fica mais correto: um arquivo por usuário atribui a ação a quem a fez, em vez de
+# misturar todos num log só.
+LOGDIR="${HOME:-/tmp}/.schematize"
+LOG="$LOGDIR/ops-shell.log"
+mkdir -p "$LOGDIR" 2>/dev/null || true
+
+# Log local, independente do cliente. Se o cliente mentir ou sumir, o host ainda sabe o que
+# rodou — auditoria de um lado só é auditoria pela metade.
+registrar() {
+    # $1=veredito $2=pedido
+    printf '%s\t%s\t%s\t%s\n' \
+        "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "${USER:-?}" "$1" "$2" >> "$LOG" 2>/dev/null || true
+}
+
+# O log é controle de segurança, não conveniência: se não dá pra gravar, o shim AVISA em vez
+# de seguir calado. Não recusa — deixar o host inoperante por causa do log seria pior — mas
+# o operador fica sabendo que a auditoria do lado do host está cega.
+if ! ( : >> "$LOG" ) 2>/dev/null; then
+    printf 'schematize-ops-shell: AVISO — nao consigo gravar o log em %s; a auditoria do lado do host esta cega.\n' "$LOG" >&2
+fi
+
+recusar() {
+    registrar "deny" "${SSH_ORIGINAL_COMMAND:-<vazio>}"
+    printf 'schematize-ops-shell: recusado — %s\n' "$1" >&2
+    if [ -f "$CATALOGO" ]; then
+        printf 'verbos disponíveis neste host:\n' >&2
+        grep -v '^#' "$CATALOGO" 2>/dev/null | grep -v '^[[:space:]]*$' | cut -f1 | sed 's/^/  /' >&2
+    fi
+    # As crases aqui sao TEXTO da mensagem de ajuda, nao substituicao de comando — e por
+    # isso a aspa simples esta certa: e ela que impede a expansao. O SC2016 avisa do caso
+    # oposto (quem QUERIA expandir e usou aspa simples por engano), que nao e este.
+    # shellcheck disable=SC2016
+    printf 'para criar um verbo novo, registre-o no ops e rode `schematize vps bootstrap <alias>`.\n' >&2
+    exit 126
+}
+
+# Sessão interativa (sem $SSH_ORIGINAL_COMMAND) não existe por esta chave. É o ponto.
+[ "${SSH_ORIGINAL_COMMAND-}" = "" ] && recusar "esta chave não abre shell interativo"
+
+PEDIDO=$SSH_ORIGINAL_COMMAND
+
+# INTROSPECÇÃO — o único pedido embutido, e NÃO é um escape.
+#
+# Por que existe: uma vez instalado, o shim recusa tudo fora do catálogo — inclusive o script
+# de sondagem do próprio schematize. Sem isto o app fica cego pro host que ele mesmo protegeu,
+# e o `vps probe` passa a reportar "sem fronteira" justamente onde a fronteira existe (foi
+# assim que este bug foi descoberto, no Q.A. contra sshd real).
+#
+# Por que NÃO é escape: não executa nada. Só imprime o que o shim já sabe de si — onde ele
+# mora, que o forced command está ativo, e quantos verbos tem. Quem pergunta já tem a chave;
+# nada aqui revela mais do que isso.
+if [ "$PEDIDO" = "schematize-probe" ]; then
+    case $DIR in
+        /usr/local/lib/schematize) nivel=root ;;
+        *) nivel=usuario ;;
+    esac
+    n=0
+    [ -f "$CATALOGO" ] && n=$(grep -c -v -e '^#' -e '^[[:space:]]*$' "$CATALOGO" 2>/dev/null || echo 0)
+    registrar "probe" "$PEDIDO"
+    echo "via=shim"
+    echo "shim=$nivel"
+    echo "forced=sim"
+    echo "home=${HOME:-}"
+    echo "catalogo=$n"
+    exit 0
+fi
+
+# Um verbo é UMA palavra. Qualquer separador, expansão ou argumento é recusa — argumento é
+# onde mora a criatividade, e o catálogo existe justamente pra não precisar confiar nela.
+case $PEDIDO in
+    *' '*|*';'*|*'&'*|*'|'*|*'`'*|*'$'*|*'>'*|*'<'*|*'('*|*')'*|*'
+'*) recusar "verbo tem que ser uma palavra só, sem argumento nem encadeamento" ;;
+esac
+
+[ -f "$CATALOGO" ] || recusar "não há catálogo instalado neste host"
+
+# Casamento EXATO: a primeira coluna (até o TAB) tem que ser idêntica ao pedido.
+# `while read` em vez de grep com regex: sem surpresa de metacaractere no pedido.
+COMANDO=""
+while IFS='	' read -r verbo cmd; do
+    case $verbo in \#*|'') continue ;; esac
+    if [ "$verbo" = "$PEDIDO" ]; then
+        COMANDO=$cmd
+        break
+    fi
+done < "$CATALOGO"
+
+[ -n "$COMANDO" ] || recusar "verbo desconhecido: $PEDIDO"
+
+registrar "allow" "$PEDIDO"
+# O comando do catálogo foi escrito por um humano e revisado; o pedido do agente não entra
+# nele em lugar nenhum. É por isso que o `sh -c` aqui é seguro e o do outro lado não seria.
+exec /bin/sh -c "$COMANDO"
