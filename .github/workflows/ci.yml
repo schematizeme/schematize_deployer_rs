@@ -1,0 +1,70 @@
+name: ci
+
+# POR QUE ISTO EXISTE, E POR QUE NASCE JUNTO COM O REPO
+#
+# O `schematize_cli_rs` viveu com 431 testes e NENHUM workflow que os rodasse. A Definition
+# of Done da casa exige "CI verde", e sem workflow a frase era verdadeira por vacuidade — a
+# pior maneira de uma regra ser cumprida. Custou uma passada dedicada para consertar.
+#
+# Este repo não repete isso: o CI entra no mesmo marco em que o código entra. Um repo que
+# nasce sem CI não "ganha CI depois"; ele ganha o hábito de fundir sem verificar.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # `rusqlite` liga no sqlite do SISTEMA por padrão (o `bundled` é feature opcional).
+      - name: deps de sistema
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y pkg-config libsqlite3-dev
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: fmt
+        run: cargo fmt --check
+
+      - name: clippy
+        run: cargo clippy --all-targets -- -D warnings
+
+      # `ssh-keygen` é dependência REAL deste app, não só do teste: sem ele o `sshkeys` não
+      # gera nem importa nada. O runner do GitHub já o traz; a checagem existe para o dia em
+      # que parar de trazer — falhar aqui, com esta mensagem, é melhor que 9 testes
+      # reprovando por um motivo que ninguém liga ao `openssh-client`.
+      - name: ssh-keygen existe (o app depende dele)
+        run: |
+          command -v ssh-keygen >/dev/null \
+            || { echo "::error::ssh-keygen ausente — o sshkeys não funciona sem ele"; exit 1; }
+          ssh-keygen -h 2>&1 | head -1 || true
+
+      - name: testes
+        run: cargo test --all-targets
+
+      # A 2ª passada caça teste que depende de ordem ou de estado deixado pela 1ª. Barato, e
+      # já pegou flaky nesta casa.
+      - name: testes (segunda passada, caça a flaky)
+        run: cargo test --all-targets
+
+      # O build `--locked` prova que o Cargo.lock commitado RESOLVE — sem isto, um lock
+      # desatualizado só aparece na máquina de quem clona.
+      - name: build --locked
+        run: cargo build --locked
