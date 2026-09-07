@@ -47,31 +47,31 @@ pub(crate) enum Cmd {
         #[command(subcommand)]
         sub: McpCmd,
     },
-    /// Cofre: o segredo em repouso, ilegível para quem tem o disco (ADR-0010).
-    Cofre {
+    /// Vault: secrets at rest, unreadable to whoever holds the disk (ADR-0010).
+    Vault {
         #[command(subcommand)]
-        sub: CofreCmd,
+        sub: VaultCmd,
     },
     /// DNS: gere zonas e registros da Cloudflare, com o token guardado no cofre.
     Dns {
         #[command(subcommand)]
         sub: DnsCmd,
     },
-    /// Visão geral: o que está configurado e o que dá para fazer. É o que o ícone abre.
-    Painel {
-        /// Espera uma tecla no fim. O lançador do desktop usa isto — sem ele o terminal
-        /// fecharia no mesmo instante e o clique pareceria não ter feito nada.
+    /// Overview: what is configured and what you can do. This is what the icon opens.
+    Panel {
+        /// Wait for a keypress at the end. The desktop launcher uses this — without it the
+        /// terminal would close instantly and the click would look like it did nothing.
         #[arg(long)]
-        aguardar: bool,
+        wait: bool,
     },
-    /// Ícone e entrada no menu de aplicativos — para abrir o app sem o schematize.
+    /// Icon and application-menu entry — so the app opens without schematize.
     Desktop {
-        /// Instala (padrão se nenhuma flag vier).
+        /// Install (the default when no flag is given).
         #[arg(long)]
-        instalar: bool,
-        /// Remove a entrada do menu.
+        install: bool,
+        /// Remove the menu entry.
         #[arg(long)]
-        remover: bool,
+        remove: bool,
     },
 }
 
@@ -86,9 +86,9 @@ pub(crate) enum DnsCmd {
         /// Só diz SE há token guardado — nunca qual é.
         #[arg(long)]
         status: bool,
-        /// Remove o token do cofre.
+        /// Remove the token from the vault.
         #[arg(long)]
-        remover: bool,
+        remove: bool,
     },
     /// Lista as zonas (domínios) da conta.
     Zones,
@@ -96,9 +96,9 @@ pub(crate) enum DnsCmd {
     List {
         /// Nome da zona (ex.: exemplo.com) ou o id de 32 hex.
         zona: String,
-        /// Só deste tipo (A, CNAME, TXT…).
+        /// Only this record type (A, CNAME, TXT…).
         #[arg(long)]
-        tipo: Option<String>,
+        r#type: Option<String>,
     },
     /// Cria um registro.
     Add {
@@ -125,9 +125,9 @@ pub(crate) enum DnsCmd {
         nome: String,
         /// Novo conteúdo.
         conteudo: String,
-        /// Desambigua quando o nome casa com mais de um registro.
+        /// Disambiguates when the name matches more than one record.
         #[arg(long)]
-        tipo: Option<String>,
+        r#type: Option<String>,
         #[arg(long)]
         ttl: Option<i64>,
         #[arg(long)]
@@ -140,22 +140,22 @@ pub(crate) enum DnsCmd {
         zona: String,
         nome: String,
         #[arg(long)]
-        tipo: Option<String>,
+        r#type: Option<String>,
         #[arg(long)]
         yes: bool,
     },
 }
 
-/// O cofre cifrado. A passphrase NUNCA vem por argumento — `ps` a mostraria para qualquer
-/// processo da máquina, incluindo o agente que este cofre existe para manter longe do segredo.
+/// The encrypted vault. The passphrase NEVER comes as an argument — `ps` would show it to
+/// every process on the machine, including the agent this vault exists to keep away from it.
 #[derive(Subcommand)]
-pub(crate) enum CofreCmd {
-    /// Cria o cofre. A passphrase é pedida no terminal, sem eco, e confirmada.
+pub(crate) enum VaultCmd {
+    /// Create the vault. The passphrase is read from the terminal, without echo, and confirmed.
     Init,
-    /// Mostra onde o cofre está, a permissão do arquivo e a força do KDF com que foi criado.
+    /// Where the vault is, the file permission, and the KDF strength it was created with.
     Status,
-    /// Troca a passphrase. Regrava com salt, nonce e custo de KDF novos.
-    TrocarSenha,
+    /// Change the passphrase. Rewrites with a new salt, nonce and KDF cost.
+    ChangePassphrase,
 }
 
 #[derive(Subcommand)]

@@ -52,7 +52,7 @@ fn ler_passphrase(prompt: &str) -> Result<String, String> {
             Ok(linha.trim_end_matches(['\n', '\r']).to_string())
         }
         Err(e) => Err(format!(
-            "não consegui ler a passphrase: {e}. Rode `deployer cofre …` num terminal, \
+            "não consegui ler a passphrase: {e}. Rode `deployer vault …` num terminal, \
              ou passe a passphrase pelo stdin (`printf '%s\\n' \"$SENHA\" | deployer …`)"
         )),
     }
@@ -87,9 +87,9 @@ fn ler_passphrase_nova() -> Result<String, String> {
 }
 
 /// Despacha `deployer cofre <sub>`.
-pub(crate) fn cofre_cmd(sub: crate::cli::args::CofreCmd) -> Result<(), String> {
+pub(crate) fn cofre_cmd(sub: crate::cli::args::VaultCmd) -> Result<(), String> {
     match sub {
-        crate::cli::args::CofreCmd::Init => {
+        crate::cli::args::VaultCmd::Init => {
             if cofre::arquivo::existe() {
                 // Falha fechada: recriar por cima apagaria o conteúdo, e não há desfazer.
                 return Err(format!(
@@ -110,10 +110,10 @@ pub(crate) fn cofre_cmd(sub: crate::cli::args::CofreCmd) -> Result<(), String> {
             Ok(())
         }
 
-        crate::cli::args::CofreCmd::Status => {
+        crate::cli::args::VaultCmd::Status => {
             let p = cofre::arquivo::caminho();
             if !cofre::arquivo::existe() {
-                println!("cofre: não existe ainda (crie com `deployer cofre init`)");
+                println!("cofre: não existe ainda (crie com `deployer vault init`)");
                 return Ok(());
             }
             println!("cofre: {}", p.display());
@@ -148,7 +148,7 @@ pub(crate) fn cofre_cmd(sub: crate::cli::args::CofreCmd) -> Result<(), String> {
             Ok(())
         }
 
-        crate::cli::args::CofreCmd::TrocarSenha => {
+        crate::cli::args::VaultCmd::ChangePassphrase => {
             let atual = ler_passphrase("passphrase atual: ")?;
             // Abre ANTES de pedir a nova: sem isto, quem erra a atual só descobre depois de
             // digitar a nova duas vezes.

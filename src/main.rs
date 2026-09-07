@@ -50,10 +50,10 @@ fn main() {
         Cmd::Ssh { sub } => cli::ssh::ssh_cmd(sub),
         Cmd::Vps { sub } => cli::vps::vps_cmd(sub),
         Cmd::Mcp { sub } => cli::mcp::mcp_cmd(sub),
-        Cmd::Cofre { sub } => cli::cofre::cofre_cmd(sub),
+        Cmd::Vault { sub } => cli::cofre::cofre_cmd(sub),
         Cmd::Dns { sub } => cli::dns::dns_cmd(sub),
-        Cmd::Painel { aguardar } => cli::painel::painel_cmd(aguardar),
-        Cmd::Desktop { instalar, remover } => cli::painel::desktop_cmd(instalar, remover),
+        Cmd::Panel { wait } => cli::painel::painel_cmd(wait),
+        Cmd::Desktop { install, remove } => cli::painel::desktop_cmd(install, remove),
     };
     if let Err(e) = r {
         eprintln!("erro: {e}");

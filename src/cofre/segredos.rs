@@ -70,7 +70,7 @@ impl Segredos {
 
     /// **O quê:** as CHAVES guardadas — nunca os valores.
     ///
-    /// **Onde:** `deployer cofre status` e `dns status`, para mostrar *o que* está guardado
+    /// **Onde:** `deployer vault status` e `dns status`, para mostrar *o que* está guardado
     /// sem mostrar o quê. É a única listagem que este módulo oferece, e a limitação é o ponto.
     pub fn chaves(&self) -> Vec<&str> {
         self.itens.keys().map(String::as_str).collect()

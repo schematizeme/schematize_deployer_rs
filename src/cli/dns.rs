@@ -67,7 +67,7 @@ fn confirmar(motivo: &str, o_que: &str) -> bool {
 /// Despacha `deployer dns <sub>`.
 pub(crate) fn dns_cmd(sub: DnsCmd) -> Result<(), String> {
     match sub {
-        DnsCmd::Auth { status, remover } => {
+        DnsCmd::Auth { status, remove } => {
             let pass = passphrase()?;
             if status {
                 let s = deployer::cofre::segredos::carregar(&pass)?;
@@ -80,7 +80,7 @@ pub(crate) fn dns_cmd(sub: DnsCmd) -> Result<(), String> {
                 }
                 return Ok(());
             }
-            if remover {
+            if remove {
                 let tinha = credencial::remover(&pass)?;
                 println!(
                     "{}",
@@ -119,7 +119,7 @@ pub(crate) fn dns_cmd(sub: DnsCmd) -> Result<(), String> {
             Ok(())
         }
 
-        DnsCmd::List { zona, tipo } => {
+        DnsCmd::List { zona, r#type: tipo } => {
             let cf = cliente()?;
             let zid = ops::resolver_zona(&cf, &zona)?;
             let mut rs = ops::listar(&cf, &zid)?;
@@ -160,7 +160,7 @@ pub(crate) fn dns_cmd(sub: DnsCmd) -> Result<(), String> {
             Ok(())
         }
 
-        DnsCmd::Update { zona, nome, tipo, conteudo, ttl, proxied, yes } => {
+        DnsCmd::Update { zona, nome, r#type: tipo, conteudo, ttl, proxied, yes } => {
             let cf = cliente()?;
             let zid = ops::resolver_zona(&cf, &zona)?;
             let rs = ops::listar(&cf, &zid)?;
@@ -189,7 +189,7 @@ pub(crate) fn dns_cmd(sub: DnsCmd) -> Result<(), String> {
             Ok(())
         }
 
-        DnsCmd::Rm { zona, nome, tipo, yes } => {
+        DnsCmd::Rm { zona, nome, r#type: tipo, yes } => {
             let cf = cliente()?;
             let zid = ops::resolver_zona(&cf, &zona)?;
             let rs = ops::listar(&cf, &zid)?;

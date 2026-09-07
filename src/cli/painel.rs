@@ -11,7 +11,7 @@
 
 use deployer::{cofre, dns::credencial, nucleo::desktop};
 
-pub(crate) fn painel_cmd(aguardar: bool) -> Result<(), String> {
+pub(crate) fn painel_cmd(wait: bool) -> Result<(), String> {
     println!("schematize Deployer {}", env!("CARGO_PKG_VERSION"));
     println!("SSH, VPS e DNS — com a credencial fora do alcance do agente.");
     println!();
@@ -20,7 +20,7 @@ pub(crate) fn painel_cmd(aguardar: bool) -> Result<(), String> {
     let tem_cofre = cofre::arquivo::existe();
     println!("  cofre     : {}", if tem_cofre { "criado" } else { "NÃO criado" });
     if !tem_cofre {
-        println!("              comece por aqui: deployer cofre init");
+        println!("              comece por aqui: deployer vault init");
     }
 
     // CHAVES — leitura pública, não precisa destravar nada.
@@ -48,10 +48,10 @@ pub(crate) fn painel_cmd(aguardar: bool) -> Result<(), String> {
     if !desktop::arquivo_desktop(&deployer::nucleo::util::home()).exists() {
         println!();
         println!("  (este app ainda não está no seu menu de aplicativos:");
-        println!("   `deployer desktop --instalar` põe o ícone lá)");
+        println!("   `deployer desktop --install` põe o ícone lá)");
     }
 
-    if aguardar {
+    if wait {
         // O lançador do desktop fecha o terminal quando o processo sai. Sem esta pausa, o
         // clique no ícone seria um piscar.
         println!();
@@ -65,12 +65,12 @@ pub(crate) fn painel_cmd(aguardar: bool) -> Result<(), String> {
 }
 
 /// `deployer desktop` — põe (ou tira) o app do menu de aplicativos.
-pub(crate) fn desktop_cmd(instalar: bool, remover: bool) -> Result<(), String> {
-    if instalar && remover {
-        return Err("`--instalar` e `--remover` são opostos — peça um de cada vez".into());
+pub(crate) fn desktop_cmd(install: bool, remove: bool) -> Result<(), String> {
+    if install && remove {
+        return Err("`--install` and `--remove` are opposites — ask for one at a time".into());
     }
     let home = deployer::nucleo::util::home();
-    if remover {
+    if remove {
         let tinha = desktop::remover(&home)?;
         println!("{}", if tinha { "removido do menu." } else { "não estava no menu." });
         return Ok(());

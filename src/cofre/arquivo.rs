@@ -4,7 +4,7 @@
 //! e destrava. O formato é `cabeçalho em claro || cifrado`, com o cabeçalho autenticado como
 //! dado associado (ver [`super::cripto`]).
 //!
-//! **Onde:** `deployer cofre init|abrir` e, adiante, o registro de hosts.
+//! **Onde:** `deployer vault init|abrir` e, adiante, o registro de hosts.
 //!
 //! ## Escrita atômica, e por que não é zelo excessivo
 //!
@@ -97,7 +97,7 @@ pub fn gravar(passphrase: &str, claro: &[u8]) -> Result<(), String> {
 pub fn abrir_de(origem: &Path, passphrase: &str) -> Result<Vec<u8>, String> {
     let bruto = std::fs::read(origem).map_err(|e| match e.kind() {
         std::io::ErrorKind::NotFound => {
-            "não há cofre ainda — crie um com `deployer cofre init`".to_string()
+            "não há cofre ainda — crie um com `deployer vault init`".to_string()
         }
         _ => format!("não consegui ler o cofre: {e}"),
     })?;
@@ -205,7 +205,7 @@ mod tests {
     fn cofre_ausente_ensina_o_proximo_passo() {
         let p = sandbox("ausente");
         let e = abrir_de(&p, "s").unwrap_err();
-        assert!(e.contains("cofre init"), "a mensagem tem de dizer o que fazer: {e}");
+        assert!(e.contains("vault init"), "a mensagem tem de dizer o que fazer: {e}");
         let _ = std::fs::remove_dir_all(p.parent().unwrap());
     }
 

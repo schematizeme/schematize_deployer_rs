@@ -3,7 +3,7 @@
 //! **O quê:** grava o `.desktop` e instala os ícones, para o app **aparecer na lista de
 //! programas** e abrir sozinho — sem passar pelo schematize.
 //!
-//! **Onde:** `deployer desktop --instalar` / `--remover`, e o `install.sh` ao instalar o app.
+//! **Onde:** `deployer desktop --install` / `--remover`, e o `install.sh` ao instalar o app.
 //!
 //! ## Por que o app instala a PRÓPRIA integração
 //!
@@ -17,7 +17,7 @@
 //! termina no mesmo instante — o clique não faria **nada**, que é pior que não ter ícone.
 //! Com `Terminal=true`, o ambiente gráfico abre um terminal e roda o comando ali.
 //!
-//! E o comando é `painel --aguardar`: sem o `--aguardar`, o terminal fecharia junto com o
+//! E o comando é `panel --wait`: sem o `--aguardar`, o terminal fecharia junto com o
 //! processo e a pessoa veria um piscar. §37.48 — o software se adapta ao clique que a pessoa
 //! deu, em vez de exigir que ela saiba que isto é uma CLI.
 
@@ -42,7 +42,7 @@ pub fn render(bin: &Path, icone: &Path) -> String {
          Name=schematize Deployer\n\
          GenericName=Chaves SSH, VPS e cofre\n\
          Comment=Opera servidor com a credencial fora do alcance do agente\n\
-         Exec={} painel --aguardar\n\
+         Exec={} panel --wait\n\
          Icon={}\n\
          Terminal=true\n\
          Categories=Development;System;Security;\n\
@@ -65,7 +65,7 @@ pub fn arquivo_desktop(home: &Path) -> PathBuf {
 
 /// **O quê:** instala ícone + `.desktop`, e devolve o caminho do `.desktop`.
 ///
-/// **Onde:** `deployer desktop --instalar` e o `install.sh`.
+/// **Onde:** `deployer desktop --install` e o `install.sh`.
 ///
 /// **`bin` é o caminho do próprio executável**, resolvido pelo chamador — gravar um caminho
 /// adivinhado faria o ícone abrir outra coisa (ou nada) na máquina de quem instalou fora do
@@ -123,7 +123,7 @@ mod tests {
     fn abre_em_terminal_e_nao_fecha_na_cara() {
         let t = render(Path::new("/b/deployer"), Path::new("/i/x.png"));
         assert!(t.contains("Terminal=true"), "CLI sem terminal não mostra nada");
-        assert!(t.contains("--aguardar"), "sem isto o terminal fecha antes de a pessoa ler");
+        assert!(t.contains("--wait"), "sem isto o terminal fecha antes de a pessoa ler");
     }
 
     /// O `.desktop` tem os campos que o menu exige — sem eles a entrada é ignorada em
