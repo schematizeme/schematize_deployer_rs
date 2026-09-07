@@ -1,0 +1,93 @@
+name: release
+
+# POR QUE ISTO EXISTE
+#
+# Sem release, `releases/latest/download/` não serve nada e o app só chega em quem compila do
+# fonte. Foi a dívida nº 1 do `schematize_cli_rs` — os releases ficaram 19 versões atrás do
+# `main`, e foi essa defasagem que quebrou o `curl | bash` de todo mundo.
+#
+# Aqui o release nasce com o repo, e a tag é o gatilho: cortar tag É publicar.
+#
+# UM REPO, DOIS BINÁRIOS (ADR-0010) — e é isso que torna este arquivo curto. No schematize,
+# CLI e GUI moram em repos separados, e casar as duas metades exige `packaging/gui-pin.txt`,
+# `Cargo.lock` pinado entre repos e `cargo update --precise`. Três mecanismos que aqui não
+# precisam existir: o que sai do release é o que está NESTE commit.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  criar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: cria o release (rascunho vira público ao fim)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1 \
+            || gh release create "${GITHUB_REF_NAME}" \
+                 --title "${GITHUB_REF_NAME}" \
+                 --notes "schematize deployer ${GITHUB_REF_NAME} — SSH, VPS e cofre cifrado."
+
+  binarios:
+    needs: criar
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            asset: deployer-linux-x86_64
+          - runner: macos-14
+            asset: deployer-macos-arm64
+          # `macos-15-intel`, NÃO `macos-13`: aquela imagem foi aposentada, e o modo de
+          # falha dela é o pior possível — o job não reprova, fica *queued* para sempre e
+          # segura o release inteiro. Já aconteceu neste ecossistema (CONTEXT.md §4).
+          - runner: macos-15-intel
+            asset: deployer-macos-x86_64
+          - runner: windows-latest
+            asset: deployer-windows-x86_64.exe
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-relcargo-${{ hashFiles('**/Cargo.lock') }}
+
+      # `--locked` de propósito: o binário de uma tag tem de vir do lock DAQUELA tag.
+      # Sem isso, recompilar a mesma tag pode dar outro binário — que foi exatamente a
+      # dívida que o `schematize_cli_rs` levou meses para pagar.
+      #
+      # `sqlite-embutido` (default) e não a lib do sistema: o binário publicado precisa rodar
+      # em qualquer distro, sem depender da versão de libsqlite3 de quem baixou.
+      - name: build release
+        run: cargo build --release --locked
+
+      - name: renomeia p/ o nome estável do asset
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            cp target/release/deployer.exe "${{ matrix.asset }}"
+          else
+            cp target/release/deployer "${{ matrix.asset }}"
+          fi
+
+      - name: publica
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: gh release upload "${GITHUB_REF_NAME}" "${{ matrix.asset }}" --clobber
