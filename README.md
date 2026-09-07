@@ -29,20 +29,31 @@ quebraria toda tool use do usuário.
 
 Sobra o segredo **em repouso na máquina**. É o que este app existe para resolver.
 
-## O que este app AINDA NÃO garante — leia antes de confiar
+## O que o cofre protege — e o que não protege
 
-> **Separar o processo, sozinho, não isola credencial nenhuma.**
+O **cofre existe** (`deployer cofre init`) e o que entra nele é ilegível para quem tem o
+disco: Argon2id de 64 MiB + XChaCha20-Poly1305, arquivo em 600, cabeçalho autenticado. Mas o
+escopo dele hoje é preciso, e vale dizer exatamente qual:
+
+| | protegido pelo cofre? |
+|---|---|
+| O que você guardar nele | **sim** — em repouso é ruído sem a passphrase |
+| O inventário de hosts (`vps.db`: alias, host, usuário, ambiente) | **ainda não** — a migração é o resto da fase 3 |
+| Suas chaves privadas em `~/.ssh/*` | **não, e nunca será** — quem as protege é a passphrase **da própria chave** |
+| O processo já destravado | **não** — enquanto aberto, a chave está em memória |
+
+> **Duas coisas que este cofre NÃO faz, ditas antes que alguém suponha.**
 >
-> Enquanto o Deployer roda como o **mesmo usuário do sistema** que o schematize, e o segredo
-> continua em `~/.schematize/vps.db` e `~/.ssh/*`, a IA com `Bash` lê tudo exatamente como lia
-> antes. `cat ~/.ssh/id_ed25519` não passa a falhar porque o código mudou de repositório.
+> Ele não protege chave SSH sem passphrase: uma chave sem senha em `~/.ssh` continua legível
+> por qualquer processo seu, e nenhum cofre em outro arquivo muda isso. O `deployer ssh
+> import` **preserva** a passphrase da chave justamente por isso.
 >
-> O isolamento de verdade vem do **cofre cifrado** — passphrase só em memória, auto-lock,
-> segredo em repouso ilegível. Ele é a **fase 3** do plano e **ainda não existe**.
+> E ele não protege contra quem já está dentro do processo destravado. Isso não é conserto
+> pendente — é o limite de qualquer cofre de desktop. O que encurta a janela é o auto-lock,
+> não uma promessa.
 
 Está escrito aqui, em cima e não em rodapé, porque a armadilha que o [ADR-0004] nomeou é
-exatamente esta: a defesa que **dá confiança sem dar garantia**. Até a fase 3, esta separação
-entrega **arquitetura, e não segurança**.
+exatamente esta: a defesa que **dá confiança sem dar garantia**.
 
 ## Estado
 
@@ -50,8 +61,8 @@ entrega **arquitetura, e não segurança**.
 |---|---|---|
 | 0 | ADR aceito | **feito** |
 | 1 | Repo próprio, três contextos movidos, comportamento idêntico | **feito** |
-| 2 | CLI própria + snapshot de superfície | **feito** (29 comandos congelados) |
-| 3 | **Cofre cifrado** — a fase que entrega o objetivo de segurança | aberto |
+| 2 | CLI própria + snapshot de superfície | **feito** (33 comandos congelados) |
+| 3 | **Cofre cifrado** | **feito** (primitiva + CLI); migrar o `vps.db` para dentro dele segue aberto |
 | 4 | GUI própria (standalone) | aberto |
 | 5 | Ponte com o schematize (subprocesso, superfície tipada) | aberto |
 | 6 | Instalação pelos dois caminhos + release | aberto |
@@ -67,6 +78,7 @@ src/
 ├── sshkeys/   gerar · IMPORTAR · listar · exportar · usar  (a privada nunca é lida)
 ├── vps/       registro de hosts · política · auditoria · execução mediada
 ├── mcp/       as tools tipadas que o agente enxerga, e só elas
+├── cofre/     Argon2id + XChaCha20-Poly1305, escrita atômica, arquivo em 600
 └── nucleo/    infraestrutura: caminhos, processo, permissão, redação, i18n, config
 ```
 
@@ -91,7 +103,7 @@ outro — e há teste afirmando isso.
 ## Desenvolvimento
 
 ```sh
-cargo test                       # 231 testes
+cargo test                       # 249 testes
 cargo clippy --all-targets -- -D warnings
 cargo fmt --check
 DEPLOYER_REGRAVA_SUPERFICIE=1 cargo test superficie   # só quando a mudança for intencional
