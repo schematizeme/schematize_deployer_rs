@@ -1,5 +1,13 @@
 CMD deployer
   SOBRE schematize deployer — chaves SSH, VPS e acesso remoto auditado
+CMD deployer cofre
+  SOBRE Cofre: o segredo em repouso, ilegível para quem tem o disco (ADR-0010)
+CMD deployer cofre init
+  SOBRE Cria o cofre. A passphrase é pedida no terminal, sem eco, e confirmada
+CMD deployer cofre status
+  SOBRE Mostra onde o cofre está, a permissão do arquivo e a força do KDF com que foi criado
+CMD deployer cofre trocar-senha
+  SOBRE Troca a passphrase. Regrava com salt, nonce e custo de KDF novos
 CMD deployer mcp
   SOBRE MCP: exposes the VPS manager to the agent as typed tools
 CMD deployer mcp install

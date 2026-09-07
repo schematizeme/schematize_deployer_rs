@@ -47,6 +47,23 @@ pub(crate) enum Cmd {
         #[command(subcommand)]
         sub: McpCmd,
     },
+    /// Cofre: o segredo em repouso, ilegível para quem tem o disco (ADR-0010).
+    Cofre {
+        #[command(subcommand)]
+        sub: CofreCmd,
+    },
+}
+
+/// O cofre cifrado. A passphrase NUNCA vem por argumento — `ps` a mostraria para qualquer
+/// processo da máquina, incluindo o agente que este cofre existe para manter longe do segredo.
+#[derive(Subcommand)]
+pub(crate) enum CofreCmd {
+    /// Cria o cofre. A passphrase é pedida no terminal, sem eco, e confirmada.
+    Init,
+    /// Mostra onde o cofre está, a permissão do arquivo e a força do KDF com que foi criado.
+    Status,
+    /// Troca a passphrase. Regrava com salt, nonce e custo de KDF novos.
+    TrocarSenha,
 }
 
 #[derive(Subcommand)]

@@ -1,6 +1,6 @@
 [package]
 name = "schematize-deployer"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 description = "schematize Deployer: chaves SSH, VPS e acesso remoto AUDITADO, com a credencial fora do alcance do agente. Funciona sozinho; integra-se ao schematize quando os dois convivem."
 license = "MIT"
@@ -24,6 +24,26 @@ serde_json = "1"
 # releases usam — roda em qualquer distro) ou `sqlite-do-sistema` (o certo pra quem compila
 # do fonte na própria máquina; o instalador detecta e escolhe).
 rusqlite = { version = "0.31", default-features = false }
+
+# ---- COFRE (ADR-0010) ----
+# Argon2id: derivação de chave a partir da passphrase. É o que o piso 3 da casa manda para
+# senha, e o que torna força-bruta cara mesmo com o blob na mão de quem tem o disco.
+argon2 = "0.5"
+# XChaCha20-Poly1305: AEAD com nonce de 24 bytes — grande o bastante para nonce ALEATÓRIO
+# sem contador. Com AES-GCM (12 bytes) um nonce repetido quebra a confidencialidade, e manter
+# contador correto entre processos é a espécie de estado que se erra em silêncio.
+chacha20poly1305 = "0.10"
+# Zerar a chave da memória no drop. Não é paranoia: sem isto ela sobrevive em heap liberado
+# e vai parar em core dump e em arquivo de swap.
+zeroize = { version = "1", features = ["derive"] }
+# CSPRNG do sistema para salt e nonce (piso 3: nunca gerador previsível).
+getrandom = "0.2"
+# Ler a passphrase SEM eco. Sem isto ela aparece na tela, e daí no screenshot, no
+# compartilhamento de tela e no histórico do terminal de quem colou.
+rpassword = "7"
+# Só para devolver o SIGPIPE ao padrão do Unix — ver a nota em `main.rs`.
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
 
 # Perfil de release IDÊNTICO ao dos outros repos do app — e isso não é estética.
 # O install.sh compila todos com um `CARGO_TARGET_DIR` único; cargo só reaproveita

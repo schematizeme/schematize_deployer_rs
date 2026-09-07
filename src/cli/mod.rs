@@ -4,6 +4,7 @@
 //! fina de propósito, para que a GUI e o MCP tenham exatamente o mesmo comportamento.
 
 pub(crate) mod args;
+pub(crate) mod cofre;
 pub(crate) mod mcp;
 pub(crate) mod ssh;
 pub(crate) mod vps;
