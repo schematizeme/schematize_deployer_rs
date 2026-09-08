@@ -121,7 +121,7 @@ mod tests {
     /// que parece quebrado.
     #[test]
     fn abre_em_terminal_e_nao_fecha_na_cara() {
-        let t = render(Path::new("/b/deployer"), Path::new("/i/x.png"));
+        let t = render(Path::new("/b/schematize-deployer"), Path::new("/i/x.png"));
         assert!(t.contains("Terminal=true"), "CLI sem terminal não mostra nada");
         assert!(t.contains("--wait"), "sem isto o terminal fecha antes de a pessoa ler");
     }
@@ -130,7 +130,7 @@ mod tests {
     /// silêncio, que é o modo de falha mais difícil de diagnosticar.
     #[test]
     fn tem_os_campos_obrigatorios() {
-        let t = render(Path::new("/b/deployer"), Path::new("/i/x.png"));
+        let t = render(Path::new("/b/schematize-deployer"), Path::new("/i/x.png"));
         for campo in ["[Desktop Entry]", "Type=Application", "Name=", "Exec=", "Icon="] {
             assert!(t.contains(campo), "faltou {campo}:\n{t}");
         }
@@ -143,7 +143,7 @@ mod tests {
         let _ = std::fs::remove_dir_all(&h);
         std::fs::create_dir_all(&h).unwrap();
 
-        let p = instalar(&h, Path::new("/b/deployer")).unwrap();
+        let p = instalar(&h, Path::new("/b/schematize-deployer")).unwrap();
         assert!(p.exists());
         let txt = std::fs::read_to_string(&p).unwrap();
         assert!(txt.contains("schematize Deployer"));

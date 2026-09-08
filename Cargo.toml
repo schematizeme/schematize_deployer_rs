@@ -13,7 +13,7 @@ path = "src/lib.rs"
 # e isso custa `packaging/gui-pin.txt`, `Cargo.lock` pinado entre repos e `--precise` no
 # release — três mecanismos só para casar as duas metades. Aqui elas se casam por construção.
 [[bin]]
-name = "deployer"
+name = "schematize-deployer"
 path = "src/main.rs"
 
 [dependencies]

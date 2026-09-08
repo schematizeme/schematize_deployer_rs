@@ -1,12 +1,12 @@
-CMD deployer
+CMD schematize-deployer
   SOBRE schematize deployer — chaves SSH, VPS e acesso remoto auditado
-CMD deployer desktop
+CMD schematize-deployer desktop
   SOBRE Icon and application-menu entry — so the app opens without schematize
   ARG install              --install
   ARG remove               --remove
-CMD deployer dns
+CMD schematize-deployer dns
   SOBRE DNS: gere zonas e registros da Cloudflare, com o token guardado no cofre
-CMD deployer dns add
+CMD schematize-deployer dns add
   SOBRE Cria um registro
   ARG conteudo              OBRIGATORIO
   ARG nome                  OBRIGATORIO
@@ -15,21 +15,21 @@ CMD deployer dns add
   ARG ttl                  --ttl
   ARG yes                  --yes
   ARG zona                  OBRIGATORIO
-CMD deployer dns auth
+CMD schematize-deployer dns auth
   SOBRE Guarda o token de API da Cloudflare no cofre (pedido pelo terminal, sem eco)
   ARG remove               --remove
   ARG status               --status
-CMD deployer dns list
+CMD schematize-deployer dns list
   SOBRE Lista os registros de uma zona
   ARG type                 --type
   ARG zona                  OBRIGATORIO
-CMD deployer dns rm
+CMD schematize-deployer dns rm
   SOBRE Remove um registro. SEMPRE pede confirmação (ou `--yes`)
   ARG nome                  OBRIGATORIO
   ARG type                 --type
   ARG yes                  --yes
   ARG zona                  OBRIGATORIO
-CMD deployer dns update
+CMD schematize-deployer dns update
   SOBRE Altera um registro existente, achado por nome
   ARG conteudo              OBRIGATORIO
   ARG nome                  OBRIGATORIO
@@ -38,35 +38,35 @@ CMD deployer dns update
   ARG type                 --type
   ARG yes                  --yes
   ARG zona                  OBRIGATORIO
-CMD deployer dns zones
+CMD schematize-deployer dns zones
   SOBRE Lista as zonas (domínios) da conta
-CMD deployer mcp
+CMD schematize-deployer mcp
   SOBRE MCP: exposes the VPS manager to the agent as typed tools
-CMD deployer mcp install
+CMD schematize-deployer mcp install
   SOBRE Registra o servidor no `.mcp.json` do projeto e libera as tools no settings.json
   ARG dry_run              --dry-run
-CMD deployer mcp serve
+CMD schematize-deployer mcp serve
   SOBRE Roda o servidor (stdio, JSON-RPC). É o que o Claude Code invoca; raramente à mão
-CMD deployer mcp status
+CMD schematize-deployer mcp status
   SOBRE Mostra o estado: servidor registrado? tools liberadas?
-CMD deployer mcp uninstall
+CMD schematize-deployer mcp uninstall
   SOBRE Remove o servidor do `.mcp.json` e as permissões do settings.json
-CMD deployer panel
+CMD schematize-deployer panel
   SOBRE Overview: what is configured and what you can do. This is what the icon opens
   ARG wait                 --wait
-CMD deployer ssh
+CMD schematize-deployer ssh
   SOBRE SSH keys: generate, import, list, export and manage keys in ~/.ssh (never leaks the private key)
-CMD deployer ssh authorize
+CMD schematize-deployer ssh authorize
   SOBRE Install the PUBLIC key into the remote host's ~/.ssh/authorized_keys (bootstrap access). Requires you already have access to the host (another key/agent/password)
   ARG name                  OBRIGATORIO
   ARG target                OBRIGATORIO
-CMD deployer ssh export
+CMD schematize-deployer ssh export
   SOBRE Print the PUBLIC key (paste it on GitHub/servers); --copy sends it to the clipboard. With --bitwarden, export the key to Bitwarden instead (item in the vault if `bw` is unlocked, else a mode-600 import JSON) — the PRIVATE key never hits stdout
   ARG bitwarden            --bitwarden
   ARG copy                 --copy
   ARG name                  OBRIGATORIO
   ARG out                  --out
-CMD deployer ssh gen
+CMD schematize-deployer ssh gen
   SOBRE Generate a key pair (ed25519 by default; --rsa = rsa 4096) into ~/.ssh/<name>
   ARG agent                --agent
   ARG comment              --comment
@@ -74,37 +74,37 @@ CMD deployer ssh gen
   ARG github               --github
   ARG name                  OBRIGATORIO
   ARG rsa                  --rsa
-CMD deployer ssh github
+CMD schematize-deployer ssh github
   SOBRE Add an existing PUBLIC key to your GitHub account (gh must be authenticated)
   ARG name                  OBRIGATORIO
-CMD deployer ssh import
+CMD schematize-deployer ssh import
   SOBRE Import an EXISTING key pair into ~/.ssh/<name> (another machine, a backup, a vault). Derives the public key from the private one; the private key is copied byte for byte and keeps its passphrase. Use --passphrase if the key is encrypted
   ARG comment              --comment
   ARG file                  OBRIGATORIO
   ARG force                --force
   ARG name                 --name
   ARG passphrase           --passphrase
-CMD deployer ssh list
+CMD schematize-deployer ssh list
   SOBRE List keys in ~/.ssh (name, type, fingerprint, comment). Never reads the private key
-CMD deployer ssh rm
+CMD schematize-deployer ssh rm
   SOBRE Remove a key pair (private + public) with confirmation
   ARG name                  OBRIGATORIO
-CMD deployer ssh run
+CMD schematize-deployer ssh run
   SOBRE Deploy WITHOUT pasting the key: `ssh -i <managed key> user@host [-- <remote cmd...>]`. Inherits the terminal, never prints the private key. No command = interactive session. Ex.: schematize ssh run deploy root@host -- 'cd /srv/app && git pull && ./deploy.sh'
   ARG command               <valor>
   ARG name                  OBRIGATORIO
   ARG target                OBRIGATORIO
-CMD deployer vault
+CMD schematize-deployer vault
   SOBRE Vault: secrets at rest, unreadable to whoever holds the disk (ADR-0010)
-CMD deployer vault change-passphrase
+CMD schematize-deployer vault change-passphrase
   SOBRE Change the passphrase. Rewrites with a new salt, nonce and KDF cost
-CMD deployer vault init
+CMD schematize-deployer vault init
   SOBRE Create the vault. The passphrase is read from the terminal, without echo, and confirmed
-CMD deployer vault status
+CMD schematize-deployer vault status
   SOBRE Where the vault is, the file permission, and the KDF strength it was created with
-CMD deployer vps
+CMD schematize-deployer vps
   SOBRE VPS: host registry + AUDITED remote execution (the agent never sees the key)
-CMD deployer vps add
+CMD schematize-deployer vps add
   SOBRE Registra um host. Nasce em `prd` + `readonly` (o mais restritivo) — ajuste com `policy`
   ARG alias                 OBRIGATORIO
   ARG env                  --env
@@ -113,46 +113,46 @@ CMD deployer vps add
   ARG key                  --key OBRIGATORIO
   ARG port                 --port
   ARG user                 --user OBRIGATORIO
-CMD deployer vps authorize
+CMD schematize-deployer vps authorize
   SOBRE Instala a chave PÚBLICA do perfil no authorized_keys do host (bootstrap de acesso)
   ARG alias                 OBRIGATORIO
-CMD deployer vps bootstrap
+CMD schematize-deployer vps bootstrap
   SOBRE Instala a MELHOR fronteira que o host aguentar (com sudo: shim do sistema; sem sudo: shim no home; host gerenciado: explica por que não dá e segue com a política do cliente)
   ARG alias                 OBRIGATORIO
-CMD deployer vps exec
+CMD schematize-deployer vps exec
   SOBRE Roda um comando no host, com política e auditoria. Ex.: schematize vps exec srv-01 -- systemctl status app
   ARG alias                 OBRIGATORIO
   ARG comando               <valor>
   ARG confirmar            --confirmar
-CMD deployer vps guard (oculto)
+CMD schematize-deployer vps guard (oculto)
   SOBRE (hook PreToolUse) veredito sobre uma tool use — lê o evento no stdin
-CMD deployer vps hooks
+CMD schematize-deployer vps hooks
   SOBRE Liga/desliga o hook que barra SSH cru e leitura de chave privada no agente
   ARG off                  --off
   ARG on                   --on
-CMD deployer vps list
+CMD schematize-deployer vps list
   SOBRE Lista os hosts registrados, com ambiente, modo e se têm fronteira server-side
-CMD deployer vps logs
+CMD schematize-deployer vps logs
   SOBRE Mostra o que já rodou (alias vazio = todos os hosts)
   ARG alias                
   ARG n                    --n
   ARG transcript           --transcript
-CMD deployer vps policy
+CMD schematize-deployer vps policy
   SOBRE Ajusta a política de um host: modo e ambiente
   ARG alias                 OBRIGATORIO
   ARG env                  --env
   ARG modo                 --modo
-CMD deployer vps probe
+CMD schematize-deployer vps probe
   SOBRE Pergunta ao host que nível de fronteira ele aguenta (somente leitura, nada é instalado)
   ARG alias                 OBRIGATORIO
-CMD deployer vps rm
+CMD schematize-deployer vps rm
   SOBRE Remove um host do registro. A trilha de auditoria dele PERMANECE
   ARG alias                 OBRIGATORIO
-CMD deployer vps trust
+CMD schematize-deployer vps trust
   SOBRE Mostra a fingerprint da host key e, com --sim, passa a confiar nela (fim do TOFU cego)
   ARG alias                 OBRIGATORIO
   ARG sim                  --sim
-CMD deployer vps verbs
+CMD schematize-deployer vps verbs
   SOBRE Catálogo de verbos do host — o vocabulário que o agente pode falar
   ARG add                  --add
   ARG alias                 OBRIGATORIO

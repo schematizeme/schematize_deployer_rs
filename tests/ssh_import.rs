@@ -71,7 +71,7 @@ fn chave_falsa(dir: &Path, nome: &str, passphrase: &str, comentario: &str) -> Pa
 /// **Onde:** todo teste. O prazo é o que transforma "pendurou" — que sem isto viraria um CI
 /// estourando por timeout, sem dizer por quê — numa falha que se explica sozinha.
 fn importar(home: &Path, args: &[&str]) -> (bool, String) {
-    let mut filho = Command::new(env!("CARGO_BIN_EXE_deployer"))
+    let mut filho = Command::new(env!("CARGO_BIN_EXE_schematize-deployer"))
         .arg("ssh")
         .arg("import")
         .args(args)

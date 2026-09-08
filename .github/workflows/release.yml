@@ -81,9 +81,9 @@ jobs:
         run: |
           set -euo pipefail
           if [ "${{ runner.os }}" = "Windows" ]; then
-            cp target/release/deployer.exe "${{ matrix.asset }}"
+            cp target/release/schematize-deployer.exe "${{ matrix.asset }}"
           else
-            cp target/release/deployer "${{ matrix.asset }}"
+            cp target/release/schematize-deployer "${{ matrix.asset }}"
           fi
 
       - name: publica

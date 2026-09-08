@@ -19,7 +19,7 @@ use clap::{Parser, Subcommand};
 /// `deployer` — chaves SSH, VPS e a porta auditada que o agente enxerga.
 #[derive(Parser)]
 #[command(
-    name = "deployer",
+    name = "schematize-deployer",
     version,
     about = "schematize deployer — chaves SSH, VPS e acesso remoto auditado",
     long_about = "Opera servidor com credencial fora do alcance do agente.\n\

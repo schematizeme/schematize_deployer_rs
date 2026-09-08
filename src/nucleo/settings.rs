@@ -200,7 +200,7 @@ mod tests {
     fn desligar_o_vps_preserva_hook_de_terceiro() {
         let mut root = json!({
             "hooks": { "PreToolUse": [
-                { "matcher": "*",               "hooks": [{ "type": "command", "command": "/x/deployer vps guard" }] },
+                { "matcher": "*",               "hooks": [{ "type": "command", "command": "/x/schematize-deployer vps guard" }] },
                 { "matcher": "AskUserQuestion", "hooks": [{ "type": "command", "command": "/x/schematize overdev guard" }] },
                 { "matcher": "*",               "hooks": [{ "type": "command", "command": "/algum/hook/alheio" }] }
             ]}
