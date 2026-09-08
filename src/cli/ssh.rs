@@ -26,9 +26,9 @@ pub(crate) fn ssh_cmd(sub: SshCmd) -> Result<(), String> {
             println!("{}", tf("ssh.generated", &[("name", &info.name), ("kind", &info.kind)]));
             println!("{}", tf("ssh.fingerprint", &[("fp", &info.fingerprint)]));
             // Prova de entropia: nível de segurança + linha do ssh-keygen -l (bits + tipo).
-            println!("entropia: {}", sshkeys::entropy_note(kind));
+            println!("{}", tf("cli.ssh.entropy", &[("note", &sshkeys::entropy_note(kind))]));
             if let Ok(proof) = sshkeys::proof_line(&name) {
-                println!("prova (ssh-keygen -l): {proof}");
+                println!("{}", tf("cli.ssh.proof", &[("proof", &proof)]));
             }
             if agent {
                 if sshkeys::add_to_agent(&name) {
@@ -64,7 +64,7 @@ pub(crate) fn ssh_cmd(sub: SshCmd) -> Result<(), String> {
             // A prova vem do ssh-keygen -l sobre o que FICOU em ~/.ssh, não do que a gente
             // acha que copiou: é o que distingue "importei" de "importei certo".
             if let Ok(proof) = sshkeys::proof_line(&info.name) {
-                println!("prova (ssh-keygen -l): {proof}");
+                println!("{}", tf("cli.ssh.proof", &[("proof", &proof)]));
             }
             Ok(())
         }
@@ -109,8 +109,8 @@ pub(crate) fn ssh_cmd(sub: SshCmd) -> Result<(), String> {
         }
         SshCmd::Authorize { name, target } => {
             sshkeys::authorize(&name, &target)?;
-            println!("chave pública '{name}' instalada em {target}:~/.ssh/authorized_keys");
-            println!("teste o acesso: schematize ssh run {name} {target} -- 'echo ok'");
+            println!("{}", tf("cli.ssh.installed", &[("name", &name), ("target", &target)]));
+            println!("{}", tf("cli.ssh.test_access", &[("name", &name), ("target", &target)]));
             Ok(())
         }
         SshCmd::Rm { name } => {

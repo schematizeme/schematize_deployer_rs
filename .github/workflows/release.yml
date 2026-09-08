@@ -44,12 +44,24 @@ jobs:
         include:
           - runner: ubuntu-latest
             asset: deployer-linux-x86_64
-          - runner: macos-14
+          # `macos-15` e nao `macos-14`: a 14 ja esta marcada DEPRECATED no
+          # `actions/runner-images` (issue 13518), a caminho do mesmo destino da 13 descrito
+          # logo abaixo. Trocar antes de a imagem sumir custa esta linha.
+          - runner: macos-15
             asset: deployer-macos-arm64
-          # `macos-15-intel`, NÃO `macos-13`: aquela imagem foi aposentada, e o modo de
-          # falha dela é o pior possível — o job não reprova, fica *queued* para sempre e
-          # segura o release inteiro. Já aconteceu neste ecossistema (CONTEXT.md §4).
-          - runner: macos-15-intel
+          # Intel CROSS-COMPILADO no runner arm64, e nao numa imagem macOS x64.
+          #
+          # A familia de imagens x64 do macOS e a que vem sendo aposentada, e o modo de falha
+          # dela e o pior possivel: o job nao reprova, fica *queued* para sempre e segura o
+          # release inteiro. Ja aconteceu neste ecossistema (CONTEXT.md §4) com a `macos-13`;
+          # a `macos-14` esta DEPRECATED agora (actions/runner-images issue 13518); e a
+          # `macos-15-intel`, embora valida, e desconhecida do actionlint 1.7.7 — o que
+          # deixava o gate deste repo vermelho por falso positivo.
+          #
+          # Cross-compilar tira o repo dessa esteira inteira: um runner arm64 so, dois alvos.
+          # E o mesmo desenho que o CLI, o updater e o market ja usam.
+          - runner: macos-15
+            target: x86_64-apple-darwin
             asset: deployer-macos-x86_64
           - runner: windows-latest
             asset: deployer-windows-x86_64.exe
@@ -73,17 +85,25 @@ jobs:
       #
       # `sqlite-embutido` (default) e não a lib do sistema: o binário publicado precisa rodar
       # em qualquer distro, sem depender da versão de libsqlite3 de quem baixou.
+      # `matrix.target` so existe na linha do Intel cross-compilado; nas outras o build e
+      # nativo e o alvo default do runner ja e o certo.
+      - name: alvo de cross-compilacao
+        if: matrix.target != ''
+        run: rustup target add ${{ matrix.target }}
+
       - name: build release
-        run: cargo build --release --locked
+        run: cargo build --release --locked ${{ matrix.target && format('--target {0}', matrix.target) || '' }}
 
       - name: renomeia p/ o nome estável do asset
         shell: bash
         run: |
           set -euo pipefail
+          dir="target/${{ matrix.target }}/release"
+          [ -n "${{ matrix.target }}" ] || dir="target/release"
           if [ "${{ runner.os }}" = "Windows" ]; then
-            cp target/release/schematize-deployer.exe "${{ matrix.asset }}"
+            cp "$dir/schematize-deployer.exe" "${{ matrix.asset }}"
           else
-            cp target/release/schematize-deployer "${{ matrix.asset }}"
+            cp "$dir/schematize-deployer" "${{ matrix.asset }}"
           fi
 
       - name: publica

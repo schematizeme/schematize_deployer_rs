@@ -1,11 +1,11 @@
 CMD schematize-deployer
-  SOBRE schematize deployer — chaves SSH, VPS e acesso remoto auditado
+  SOBRE schematize deployer — SSH keys, VPS and audited remote access
 CMD schematize-deployer desktop
   SOBRE Icon and application-menu entry — so the app opens without schematize
   ARG install              --install
   ARG remove               --remove
 CMD schematize-deployer dns
-  SOBRE DNS: gere zonas e registros da Cloudflare, com o token guardado no cofre
+  SOBRE DNS: manage Cloudflare zones and records, with the token kept in the vault
 CMD schematize-deployer dns add
   SOBRE Cria um registro
   ARG conteudo              OBRIGATORIO

@@ -6,6 +6,7 @@
 
 use crate::cli::args::*;
 use crate::cli::ssh::confirm;
+use deployer::nucleo::i18n::{t, tf};
 use deployer::vps;
 
 /// Despacha `schematize vps <sub>`.
@@ -27,9 +28,20 @@ pub(crate) fn vps_cmd(sub: VpsCmd) -> Result<(), String> {
             p.ambiente = vps::Ambiente::from_raw(&env);
             p.jump = jump;
             vps::salvar(&conn, &p)?;
-            println!("host {alias:?} registrado ({} · {}:{})", p.ambiente.as_str(), p.host, p.port);
-            println!("modo: {} (o mais restritivo; ajuste com `schematize vps policy {alias} --modo livre`)", p.modo.as_str());
-            println!("próximo passo: `schematize vps trust {alias}` — confiar na host key antes de conectar");
+            println!(
+                "{}",
+                tf(
+                    "cli.vps.registered",
+                    &[
+                        ("alias", &format!("{alias:?}")),
+                        ("env", p.ambiente.as_str()),
+                        ("host", &p.host),
+                        ("port", &p.port.to_string())
+                    ]
+                )
+            );
+            println!("{}", tf("cli.vps.mode_set", &[("mode", p.modo.as_str()), ("alias", &alias)]));
+            println!("{}", tf("cli.vps.next_trust", &[("alias", &alias)]));
             Ok(())
         }
         VpsCmd::List => listar(),
@@ -53,15 +65,14 @@ fn hooks(on: bool, off: bool) -> Result<(), String> {
     let exe = deployer::util::self_exe();
     if on {
         deployer::settings::enable_vps(&exe)?;
-        println!("hook ligado: SSH cru e leitura de chave privada agora são barrados no agente.");
-        println!("o acesso remoto passa a ser `schematize vps exec <alias> -- <comando>`.");
+        println!("{}", t("cli.vps.hook_on"));
     } else if off {
         deployer::settings::disable_vps()?;
-        println!("hook desligado. O agente volta a poder rodar `ssh` direto, sem auditoria.");
+        println!("{}", t("cli.vps.hook_off"));
     } else {
         let estado = if deployer::settings::vps_hook_enabled() { "ligado" } else { "desligado" };
-        println!("hook do gestor de VPS: {estado}");
-        println!("use `schematize vps hooks --on` ou `--off`");
+        println!("{}", tf("cli.vps.hook_state", &[("state", estado)]));
+        println!("{}", t("cli.vps.hook_usage"));
     }
     Ok(())
 }
@@ -71,7 +82,7 @@ fn listar() -> Result<(), String> {
     let conn = vps::db::open()?;
     let hosts = vps::listar(&conn)?;
     if hosts.is_empty() {
-        println!("nenhum host registrado. Use `schematize vps add <alias> --host <ip> --user <user> --key <chave>`");
+        println!("{}", t("cli.vps.no_hosts"));
         return Ok(());
     }
     println!(
@@ -104,7 +115,7 @@ fn listar() -> Result<(), String> {
         );
     }
     if nunca_sondado > 0 {
-        println!("{nunca_sondado} host(s) nunca sondado(s) — `schematize vps probe <alias>` diz o que cada um aguenta.");
+        println!("{}", tf("cli.vps.never_probed", &[("count", &nunca_sondado.to_string())]));
     }
     Ok(())
 }
@@ -114,19 +125,25 @@ fn confiar(alias: &str, sim: bool) -> Result<(), String> {
     let conn = vps::db::open()?;
     let mut p = vps::buscar(&conn, alias)?.ok_or_else(|| host_ausente(alias))?;
     let c = vps::descobrir_host_key(&p)?;
-    println!("host key de {}:{} —\n{}", p.host, p.port, c.fingerprint);
+    println!(
+        "{}",
+        tf(
+            "cli.vps.host_key",
+            &[("host", &p.host), ("port", &p.port.to_string()), ("fp", &c.fingerprint)]
+        )
+    );
     if let Some(atual) = &p.fingerprint {
         if atual.trim() != c.fingerprint.trim() {
-            println!("\nATENÇÃO: a fingerprint MUDOU em relação à que estava pinada:\n{atual}");
-            println!("ou o servidor foi reinstalado, ou você não está falando com ele.");
+            println!("\n{}", tf("cli.vps.fingerprint_changed", &[("current", atual)]));
+            println!("{}", t("cli.vps.fingerprint_changed_why"));
         }
     }
     if !sim && !confirm("\nconfere com o que o provedor informou? confiar nesta chave? [y/N]") {
-        println!("nada mudou — o host segue não confiado.");
+        println!("{}", t("cli.vps.unchanged_untrusted"));
         return Ok(());
     }
     vps::confiar(&conn, &mut p, &c)?;
-    println!("host key pinada. `schematize vps exec {alias} -- <comando>` já funciona.");
+    println!("{}", tf("cli.vps.pinned_ready", &[("alias", alias)]));
     Ok(())
 }
 
@@ -162,7 +179,7 @@ fn logs(alias: &str, n: usize, transcript: bool) -> Result<(), String> {
     let conn = vps::db::open()?;
     let linhas = vps::listar_comandos(&conn, alias, n)?;
     if linhas.is_empty() {
-        println!("nada registrado ainda.");
+        println!("{}", t("cli.vps.nothing_logged"));
         return Ok(());
     }
     for l in &linhas {
@@ -173,7 +190,7 @@ fn logs(alias: &str, n: usize, transcript: bool) -> Result<(), String> {
         );
         if transcript {
             if let Some(p) = &l.transcript_path {
-                println!("    (transcript grande em {p})");
+                println!("{}", tf("cli.vps.big_transcript", &[("path", p)]));
             } else if !l.transcript.trim().is_empty() {
                 for linha in l.transcript.lines() {
                     println!("    {linha}");
@@ -181,7 +198,7 @@ fn logs(alias: &str, n: usize, transcript: bool) -> Result<(), String> {
             }
         }
     }
-    println!("\n{} linha(s) · trilha append-only, já redigida", linhas.len());
+    println!("\n{}", tf("cli.vps.trail_lines", &[("count", &linhas.len().to_string())]));
     Ok(())
 }
 
@@ -190,7 +207,13 @@ fn politica(alias: &str, modo: Option<String>, env: Option<String>) -> Result<()
     let conn = vps::db::open()?;
     let mut p = vps::buscar(&conn, alias)?.ok_or_else(|| host_ausente(alias))?;
     if modo.is_none() && env.is_none() {
-        println!("{alias}: modo={} env={}", p.modo.as_str(), p.ambiente.as_str());
+        println!(
+            "{}",
+            tf(
+                "cli.vps.policy_line",
+                &[("alias", alias), ("mode", p.modo.as_str()), ("env", p.ambiente.as_str())]
+            )
+        );
         return Ok(());
     }
     if let Some(m) = &modo {
@@ -200,9 +223,15 @@ fn politica(alias: &str, modo: Option<String>, env: Option<String>) -> Result<()
         p.ambiente = vps::Ambiente::from_raw(e);
     }
     vps::salvar(&conn, &p)?;
-    println!("{alias}: modo={} env={}", p.modo.as_str(), p.ambiente.as_str());
+    println!(
+        "{}",
+        tf(
+            "cli.vps.policy_line",
+            &[("alias", alias), ("mode", p.modo.as_str()), ("env", p.ambiente.as_str())]
+        )
+    );
     if p.ambiente == vps::Ambiente::Prd {
-        println!("(produção: toda execução vai pedir confirmação humana)");
+        println!("{}", t("cli.vps.prod_confirms"));
     }
     Ok(())
 }
@@ -220,12 +249,18 @@ fn autorizar(alias: &str) -> Result<(), String> {
     // some do caminho do gestor de VPS.
     if !vps::esta_confiado(&p) {
         let c = vps::descobrir_host_key(&p)?;
-        println!("host key de {}:{} —\n{}", p.host, p.port, c.fingerprint);
+        println!(
+            "{}",
+            tf(
+                "cli.vps.host_key",
+                &[("host", &p.host), ("port", &p.port.to_string()), ("fp", &c.fingerprint)]
+            )
+        );
         if !confirm("\nconfere com o que o provedor informou? confiar nesta chave? [y/N]") {
             return Err("bootstrap cancelado — sem confiar na host key não dá pra instalar a chave com segurança".into());
         }
         vps::confiar(&conn, &mut p, &c)?;
-        println!("host key pinada.");
+        println!("{}", t("cli.vps.pinned"));
     }
 
     let known = vps::known_hosts_path(alias)?;
@@ -240,8 +275,7 @@ fn autorizar(alias: &str) -> Result<(), String> {
         "chave pública de {:?} instalada em {alvo} (host key pinada, sem TOFU cego)",
         p.key_name
     );
-    println!("nota: isto dá acesso por chave SEM forced command. Para instalar a fronteira,");
-    println!("      rode `schematize vps bootstrap {alias}` — ele descobre o nível que este host aguenta.");
+    println!("{}", tf("cli.vps.no_forced_command", &[("alias", alias)]));
     Ok(())
 }
 
@@ -252,11 +286,11 @@ fn remover(alias: &str) -> Result<(), String> {
         return Err(host_ausente(alias));
     }
     if !confirm(&format!("remover o host {alias:?} do registro? (a auditoria permanece) [y/N]")) {
-        println!("nada mudou.");
+        println!("{}", t("cli.vps.unchanged"));
         return Ok(());
     }
     vps::remover(&conn, alias)?;
-    println!("host {alias:?} removido. A trilha de auditoria dele continua em `schematize vps logs {alias}`.");
+    println!("{}", tf("cli.vps.removed", &[("alias", &format!("{alias:?}")), ("plain", alias)]));
     Ok(())
 }
 
@@ -265,17 +299,29 @@ fn sondar(alias: &str) -> Result<(), String> {
     let conn = vps::db::open()?;
     let mut p = vps::buscar(&conn, alias)?.ok_or_else(|| host_ausente(alias))?;
     let s = vps::sondar(&conn, &p)?;
-    println!("host        : {alias}");
-    println!("instalada   : {}", s.instalada.rotulo());
-    println!("possível    : {}", s.possivel.rotulo());
-    println!("sudo -n     : {}", if s.sudo_sem_senha { "sim" } else { "não" });
-    println!("authorized_keys gravável: {}", if s.pode_escrever_authkeys { "sim" } else { "não" });
+    println!("{}", tf("cli.vps.cap_host", &[("alias", alias)]));
+    println!("{}", tf("cli.vps.cap_installed", &[("value", s.instalada.rotulo())]));
+    println!("{}", tf("cli.vps.cap_possible", &[("value", s.possivel.rotulo())]));
+    println!(
+        "{}",
+        tf(
+            "cli.vps.cap_sudo",
+            &[("value", &t(if s.sudo_sem_senha { "common.yes" } else { "common.no" }))]
+        )
+    );
+    println!(
+        "{}",
+        tf(
+            "cli.vps.cap_authkeys",
+            &[("value", &t(if s.pode_escrever_authkeys { "common.yes" } else { "common.no" }))]
+        )
+    );
     for n in &s.notas {
         println!("· {n}");
     }
     println!("\n{}", s.possivel.explicacao());
     if s.pode_melhorar() {
-        println!("\ndá pra subir de nível: `schematize vps bootstrap {alias}`");
+        println!("\n{}", tf("cli.vps.can_level_up", &[("alias", alias)]));
     }
     // A sondagem é informação: registra mesmo quando o usuário só perguntou.
     p.fronteira = s.instalada;
@@ -296,7 +342,7 @@ fn bootstrap(alias: &str) -> Result<(), String> {
             "{alias:?} é PRODUÇÃO. O bootstrap escreve no host (shim, catálogo e authorized_keys). Continuar? [y/N]"
         ))
     {
-        println!("nada mudou.");
+        println!("{}", t("cli.vps.unchanged"));
         return Ok(());
     }
     let r = vps::bootstrap::instalar(&conn, &mut p)?;
@@ -305,16 +351,19 @@ fn bootstrap(alias: &str) -> Result<(), String> {
     }
     println!();
     if r.melhorou() {
-        println!("fronteira: {} -> {}", r.antes.rotulo(), r.depois.rotulo());
+        println!(
+            "{}",
+            tf("cli.vps.boundary_moved", &[("from", r.antes.rotulo()), ("to", r.depois.rotulo())])
+        );
     } else {
-        println!("fronteira: {} (sem mudança)", r.depois.rotulo());
+        println!("{}", tf("cli.vps.boundary_same", &[("value", r.depois.rotulo())]));
     }
     if r.verbos > 0 {
-        println!("{} verbo(s) sincronizado(s) com o host.", r.verbos);
+        println!("{}", tf("cli.vps.verbs_synced", &[("count", &r.verbos.to_string())]));
     }
     println!("\n{}", r.depois.explicacao());
     if r.depois.e_server_side() {
-        println!("\ndica: `schematize vps policy {alias} --modo opsverbs` faz o cliente falar o mesmo vocabulário.");
+        println!("\n{}", tf("cli.vps.hint_opsverbs", &[("alias", alias)]));
     }
     Ok(())
 }
@@ -336,34 +385,40 @@ fn verbos(
             .as_deref()
             .ok_or("--add precisa do --cmd com o comando real que o verbo dispara")?;
         vps::verbos::definir(&conn, alias, nome, c)?;
-        println!("verbo {nome:?} definido.");
+        println!("{}", tf("cli.vps.verb_set", &[("name", &format!("{nome:?}"))]));
     }
     if let Some(nome) = &rm {
         if vps::verbos::remover(&conn, alias, nome)? {
-            println!("verbo {nome:?} removido.");
+            println!("{}", tf("cli.vps.verb_removed", &[("name", &format!("{nome:?}"))]));
         } else {
-            println!("verbo {nome:?} não existia.");
+            println!("{}", tf("cli.vps.verb_absent", &[("name", &format!("{nome:?}"))]));
         }
     }
     if seed {
         let n = vps::verbos::semear(&conn, alias)?;
-        println!("{n} verbo(s) criado(s) a partir do catálogo sugerido (nada existente foi sobrescrito).");
+        println!("{}", tf("cli.vps.verbs_seeded", &[("count", &n.to_string())]));
     }
     let lista = vps::verbos::listar(&conn, alias)?;
     if lista.is_empty() {
-        println!("catálogo de {alias:?} vazio.");
+        println!("{}", tf("cli.vps.catalog_empty", &[("alias", &format!("{alias:?}"))]));
         println!(
             "semeie um inicial com `schematize vps verbs {alias} --seed`, ou crie um a um com"
         );
-        println!("`schematize vps verbs {alias} --add <verbo> --cmd '<comando>'`.");
+        println!("{}", tf("cli.vps.catalog_hint", &[("alias", alias)]));
         return Ok(());
     }
-    println!("catálogo de {alias:?} — {} verbo(s):", lista.len());
+    println!(
+        "{}",
+        tf(
+            "cli.vps.catalog_header",
+            &[("alias", &format!("{alias:?}")), ("count", &lista.len().to_string())]
+        )
+    );
     for v in &lista {
         println!("  {:<16} {}", v.nome, v.comando);
     }
     if add.is_some() || rm.is_some() || seed {
-        println!("\nrode `schematize vps bootstrap {alias}` pra empurrar o catálogo pro host.");
+        println!("\n{}", tf("cli.vps.push_catalog", &[("alias", alias)]));
     }
     Ok(())
 }

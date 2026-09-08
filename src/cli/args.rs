@@ -21,7 +21,7 @@ use clap::{Parser, Subcommand};
 #[command(
     name = "schematize-deployer",
     version,
-    about = "schematize deployer — chaves SSH, VPS e acesso remoto auditado",
+    about = "schematize deployer — SSH keys, VPS and audited remote access",
     long_about = "Opera servidor com credencial fora do alcance do agente.\n\
                   Funciona sozinho; integra-se ao schematize quando os dois convivem."
 )]
@@ -52,7 +52,7 @@ pub(crate) enum Cmd {
         #[command(subcommand)]
         sub: VaultCmd,
     },
-    /// DNS: gere zonas e registros da Cloudflare, com o token guardado no cofre.
+    /// DNS: manage Cloudflare zones and records, with the token kept in the vault.
     Dns {
         #[command(subcommand)]
         sub: DnsCmd,

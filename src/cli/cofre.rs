@@ -16,6 +16,7 @@
 //! *a* do cofre: se ela vazar, vaza tudo.
 
 use deployer::cofre;
+use deployer::nucleo::i18n::{t, tf};
 
 /// **O quê:** lê uma passphrase sem eco pelo terminal; se não houver terminal, cai para o
 /// stdin — avisando o que isso custa.
@@ -43,9 +44,7 @@ fn ler_passphrase(prompt: &str) -> Result<String, String> {
     match rpassword::prompt_password(prompt) {
         Ok(p) => Ok(p),
         Err(e) if e.kind() == std::io::ErrorKind::NotFound || sem_terminal(&e) => {
-            eprintln!("aviso: sem terminal — lendo a passphrase do stdin.");
-            eprintln!("       Por pipe ela pode ficar no histórico do shell e no `ps`.");
-            eprintln!("       Num terminal de verdade este comando não ecoa nem registra nada.");
+            eprintln!("{}", t("cli.vault.no_tty"));
             let mut linha = String::new();
             std::io::BufRead::read_line(&mut std::io::stdin().lock(), &mut linha)
                 .map_err(|e| format!("não consegui ler a passphrase do stdin: {e}"))?;
@@ -103,29 +102,33 @@ pub(crate) fn cofre_cmd(sub: crate::cli::args::VaultCmd) -> Result<(), String> {
             // Cofre novo nasce com um conteúdo mínimo válido: assim `abrir` funciona de
             // imediato e o formato é exercitado agora, não na primeira gravação de verdade.
             cofre::arquivo::gravar(&pass, b"{}")?;
-            println!("cofre criado em {}", cofre::arquivo::caminho().display());
+            let caminho = cofre::arquivo::caminho().display().to_string();
+            println!("{}", tf("cli.vault.created", &[("path", &caminho)]));
             println!();
-            println!("Guarde essa passphrase. NÃO há recuperação: ela não é armazenada em");
-            println!("lugar nenhum — é ela que deriva a chave, e sem ela o conteúdo é ruído.");
+            println!("{}", t("cli.vault.keep_passphrase"));
             Ok(())
         }
 
         crate::cli::args::VaultCmd::Status => {
             let p = cofre::arquivo::caminho();
             if !cofre::arquivo::existe() {
-                println!("cofre: não existe ainda (crie com `deployer vault init`)");
+                println!("{}", t("cli.vault.absent"));
                 return Ok(());
             }
-            println!("cofre: {}", p.display());
+            println!("{}", tf("cli.vault.at", &[("path", &p.display().to_string())]));
             let bytes = std::fs::metadata(&p).map(|m| m.len()).unwrap_or(0);
-            println!("  tamanho: {bytes} bytes");
+            println!("{}", tf("cli.vault.size", &[("bytes", &bytes.to_string())]));
             #[cfg(unix)]
             {
                 use std::os::unix::fs::PermissionsExt;
                 if let Ok(m) = std::fs::metadata(&p) {
                     let modo = m.permissions().mode() & 0o777;
-                    let ok = if modo == 0o600 { "ok" } else { "ATENÇÃO: devia ser 600" };
-                    println!("  permissão: {modo:o} ({ok})");
+                    let ok =
+                        t(if modo == 0o600 { "cli.vault.perm_ok" } else { "cli.vault.perm_bad" });
+                    println!(
+                        "{}",
+                        tf("cli.vault.perm", &[("mode", &format!("{modo:o}")), ("verdict", &ok)])
+                    );
                 }
             }
             // O cabeçalho viaja em claro de propósito — é preciso para derivar a chave. Mostrar
@@ -133,17 +136,29 @@ pub(crate) fn cofre_cmd(sub: crate::cli::args::VaultCmd) -> Result<(), String> {
             match std::fs::read(&p).map_err(|e| e.to_string()).and_then(|b| {
                 cofre::cripto::Cabecalho::ler(&b).map(|c| (c.m_cost, c.t_cost, c.p_cost))
             }) {
-                Ok((m, t, pp)) => {
-                    println!("  kdf: argon2id m={m}KiB t={t} p={pp}");
+                Ok((m, tc, pp)) => {
+                    println!(
+                        "{}",
+                        tf(
+                            "cli.vault.kdf",
+                            &[
+                                ("m", &m.to_string()),
+                                ("t", &tc.to_string()),
+                                ("p", &pp.to_string())
+                            ]
+                        )
+                    );
                     if m < cofre::cripto::M_COST {
                         println!(
-                            "  NOTA: custo de memória abaixo do padrão atual ({}KiB). \
-                             `trocar-senha` regrava com o custo novo.",
-                            cofre::cripto::M_COST
+                            "{}",
+                            tf(
+                                "cli.vault.kdf_weak",
+                                &[("standard", &cofre::cripto::M_COST.to_string())]
+                            )
                         );
                     }
                 }
-                Err(e) => println!("  cabeçalho ilegível: {e}"),
+                Err(e) => println!("{}", tf("cli.vault.header_unreadable", &[("error", &e)])),
             }
             Ok(())
         }
@@ -157,7 +172,7 @@ pub(crate) fn cofre_cmd(sub: crate::cli::args::VaultCmd) -> Result<(), String> {
             // Regrava com salt, nonce E parâmetros de KDF novos — trocar a senha é também a
             // forma de subir o custo de um cofre antigo.
             cofre::arquivo::gravar(&nova, &conteudo)?;
-            println!("passphrase trocada. O conteúdo continua o mesmo.");
+            println!("{}", t("cli.vault.passphrase_changed"));
             Ok(())
         }
     }

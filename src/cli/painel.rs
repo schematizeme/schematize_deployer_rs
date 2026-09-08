@@ -9,53 +9,49 @@
 //! terminal. §37.48: o software se adapta ao clique, em vez de exigir que a pessoa saiba que
 //! isto é uma CLI.
 
+use deployer::nucleo::i18n::{t, tf};
 use deployer::{cofre, dns::credencial, nucleo::desktop};
 
 pub(crate) fn painel_cmd(wait: bool) -> Result<(), String> {
-    println!("schematize Deployer {}", env!("CARGO_PKG_VERSION"));
-    println!("SSH, VPS e DNS — com a credencial fora do alcance do agente.");
+    println!("{}", tf("cli.panel.title", &[("version", env!("CARGO_PKG_VERSION"))]));
+    println!("{}", t("cli.panel.subtitle"));
     println!();
 
     // COFRE — a base de tudo o mais. Sem ele, os outros itens não têm o que dizer.
     let tem_cofre = cofre::arquivo::existe();
-    println!("  cofre     : {}", if tem_cofre { "criado" } else { "NÃO criado" });
+    let estado = t(if tem_cofre { "cli.panel.vault_created" } else { "cli.panel.vault_absent" });
+    println!("{}", tf("cli.panel.vault", &[("state", &estado)]));
     if !tem_cofre {
-        println!("              comece por aqui: deployer vault init");
+        println!("{}", t("cli.panel.vault_start_here"));
     }
 
     // CHAVES — leitura pública, não precisa destravar nada.
     let chaves = deployer::sshkeys::list();
-    println!("  chaves SSH: {} em ~/.ssh", chaves.len());
+    println!("{}", tf("cli.panel.keys", &[("count", &chaves.len().to_string())]));
     if chaves.is_empty() {
-        println!("              gere uma: deployer ssh gen <nome>");
-        println!("              ou adote a que já tem: deployer ssh import <arquivo>");
+        println!("{}", t("cli.panel.keys_hint"));
     }
 
     // DNS — só diz SE há token, e só quando o cofre existe. Nunca destrava para um painel:
     // pedir a passphrase para mostrar um resumo treinaria a pessoa a digitá-la à toa.
     if tem_cofre {
-        println!("  DNS       : token da Cloudflare — use `deployer dns auth --status`");
+        println!("{}", t("cli.panel.dns"));
     }
     let _ = credencial::CHAVE; // a chave é conhecida; o valor nunca passa por aqui
 
     println!();
-    println!("O QUE DÁ PARA FAZER");
-    println!("  deployer ssh list          chaves gerenciadas");
-    println!("  deployer vps list          servidores registrados");
-    println!("  deployer dns zones         domínios na Cloudflare");
-    println!("  deployer --help            tudo");
+    println!("{}", t("cli.panel.what_you_can_do"));
 
     if !desktop::arquivo_desktop(&deployer::nucleo::util::home()).exists() {
         println!();
-        println!("  (este app ainda não está no seu menu de aplicativos:");
-        println!("   `deployer desktop --install` põe o ícone lá)");
+        println!("{}", t("cli.panel.not_in_menu"));
     }
 
     if wait {
         // O lançador do desktop fecha o terminal quando o processo sai. Sem esta pausa, o
         // clique no ícone seria um piscar.
         println!();
-        print!("Enter para fechar… ");
+        print!("{} ", t("common.press_enter"));
         use std::io::Write;
         let _ = std::io::stdout().flush();
         let mut l = String::new();
@@ -72,7 +68,7 @@ pub(crate) fn desktop_cmd(install: bool, remove: bool) -> Result<(), String> {
     let home = deployer::nucleo::util::home();
     if remove {
         let tinha = desktop::remover(&home)?;
-        println!("{}", if tinha { "removido do menu." } else { "não estava no menu." });
+        println!("{}", t(if tinha { "cli.desktop.removed" } else { "cli.desktop.was_absent" }));
         return Ok(());
     }
     // O caminho do PRÓPRIO executável: gravar um adivinhado faria o ícone abrir outra coisa
@@ -80,7 +76,7 @@ pub(crate) fn desktop_cmd(install: bool, remove: bool) -> Result<(), String> {
     let bin = std::env::current_exe()
         .map_err(|e| format!("não descobri o caminho do próprio binário: {e}"))?;
     let p = desktop::instalar(&home, &bin)?;
-    println!("instalado: {}", p.display());
-    println!("O app agora aparece na lista de programas do sistema.");
+    println!("{}", tf("cli.desktop.installed", &[("path", &p.display().to_string())]));
+    println!("{}", t("cli.desktop.now_listed"));
     Ok(())
 }

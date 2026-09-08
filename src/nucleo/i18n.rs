@@ -196,19 +196,92 @@ mod tests_paridade {
     /// apontava pra um workspace morto — na prática, ninguém checava. 18 dos 20 locales
     /// ficaram sem 12 chaves `env.*` e o buraco só apareceu por acaso. Gate que não roda
     /// não é gate.
+    /// Prefixos de chave que existem SÓ em `en` e `pt`, por decisão registrada.
+    ///
+    /// # Por que esta exceção existe, e por que ela é uma LISTA e não um `#[ignore]`
+    ///
+    /// O ADR-0014 (D8) decidiu que a saída de RUNTIME deste app vai para inglês e português
+    /// apenas. O custo foi medido antes: são ~103 strings distintas aqui, e com a régua de
+    /// vinte locales seriam ~2.000 traduções de texto sobre `authorized_keys`, cofre de
+    /// credenciais, zona de DNS e protocolo MCP. **Uma tradução errada de instrução sobre
+    /// chave SSH custa mais em confiança do que a falta dela**, e ninguém revisaria 2.000
+    /// linhas de texto técnico.
+    ///
+    /// A alternativa seria copiar o texto inglês para os outros dezoito `.json` só para
+    /// satisfazer a contagem. Isso passaria no teste e seria pior: um `ja.json` cheio de
+    /// inglês afirma ser japonês, e quem for traduzir de verdade não tem como distinguir o
+    /// que falta traduzir do que já foi.
+    ///
+    /// Aqui a ausência é DECLARADA. O `t()` já cai em `en` para chave ausente, então o
+    /// comportamento é o mesmo — a diferença é que o arquivo não mente, e um idioma novo sabe
+    /// exatamente o que lhe falta.
+    ///
+    /// **Isto não é rota de fuga:** o teste abaixo continua exigindo paridade TOTAL fora
+    /// destes prefixos, e exige que as chaves isentas existam em `en` E em `pt` — esquecer o
+    /// português reprova igual.
+    const SO_EN_E_PT: &[&str] = &["cli."];
+
+    /// **O QUE:** todo locale tem as mesmas chaves — menos as isentas por [`SO_EN_E_PT`].
+    ///
+    /// **POR QUE é teste e não script:** a paridade só era conferida por um `gate.sh` que
+    /// apontava para um workspace morto — na prática, ninguém checava, e 18 dos 20 locales
+    /// ficaram sem 12 chaves. Gate que não roda não é gate.
     #[test]
     fn todos_os_locales_tem_as_mesmas_chaves() {
         let todos = locales();
         let pt = todos.iter().find(|(n, _)| n == "pt").expect("pt.json existe");
-        let base: BTreeSet<String> = pares(&pt.1).into_iter().map(|(k, _)| k).collect();
+        let isenta = |k: &str| SO_EN_E_PT.iter().any(|p| k.starts_with(p));
+
+        let base: BTreeSet<String> =
+            pares(&pt.1).into_iter().map(|(k, _)| k).filter(|k| !isenta(k)).collect();
 
         for (nome, bruto) in &todos {
-            let k: BTreeSet<String> = pares(bruto).into_iter().map(|(k, _)| k).collect();
+            let k: BTreeSet<String> =
+                pares(bruto).into_iter().map(|(k, _)| k).filter(|k| !isenta(k)).collect();
             let faltam: Vec<_> = base.difference(&k).collect();
             let sobram: Vec<_> = k.difference(&base).collect();
             assert!(
                 faltam.is_empty() && sobram.is_empty(),
                 "{nome}.json fora de paridade — faltam {faltam:?}, sobram {sobram:?}"
+            );
+        }
+    }
+
+    /// **A exceção é declarada, e o `en`+`pt` dela é COBRADO.**
+    ///
+    /// Sem esta asserção, `SO_EN_E_PT` viraria o buraco por onde se escapa da paridade: bastaria
+    /// pôr um prefixo na lista para uma chave poder faltar em todo lugar, inclusive nos dois
+    /// idiomas que a decisão prometeu.
+    #[test]
+    fn as_chaves_isentas_existem_nos_dois_idiomas_prometidos() {
+        let todos = locales();
+        let mapa = |n: &str| -> BTreeSet<String> {
+            pares(&todos.iter().find(|(x, _)| x == n).expect("locale").1)
+                .into_iter()
+                .map(|(k, _)| k)
+                .collect()
+        };
+        let en = mapa("en");
+        let pt = mapa("pt");
+
+        let isentas_en: Vec<_> =
+            en.iter().filter(|k| SO_EN_E_PT.iter().any(|p| k.starts_with(p))).cloned().collect();
+        assert!(
+            !isentas_en.is_empty(),
+            "`SO_EN_E_PT` tem prefixo que não corresponde a chave nenhuma — exceção morta é \
+             exceção que ninguém revisa"
+        );
+        for k in &isentas_en {
+            assert!(
+                pt.contains(k),
+                "{k} está em `en` e falta em `pt` — a decisão prometeu os dois"
+            );
+        }
+        // E o inverso: nada de chave isenta que exista só em `pt`.
+        for k in pt.iter().filter(|k| SO_EN_E_PT.iter().any(|p| k.starts_with(p))) {
+            assert!(
+                en.contains(k),
+                "{k} está em `pt` e falta em `en` — `en` é o fallback de todos"
             );
         }
     }

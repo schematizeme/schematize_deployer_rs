@@ -5,6 +5,7 @@
 
 use crate::cli::args::*;
 use deployer::mcp;
+use deployer::nucleo::i18n::{t, tf};
 use serde_json::{json, Value};
 use std::path::PathBuf;
 
@@ -45,9 +46,9 @@ fn instalar(dry_run: bool) -> Result<(), String> {
     let alvo = caminho_mcp_json();
 
     if dry_run {
-        println!("gravaria em {}:", alvo.display());
+        println!("{}", tf("cli.mcp.would_write", &[("path", &alvo.display().to_string())]));
         println!("{}", serde_json::to_string_pretty(&bloco).unwrap_or_default());
-        println!("\ne liberaria em permissions.allow do settings.json:");
+        println!("\n{}", t("cli.mcp.would_allow"));
         for p in &perms {
             println!("  {p}");
         }
@@ -75,15 +76,15 @@ fn instalar(dry_run: bool) -> Result<(), String> {
     }
     std::fs::write(&alvo, serde_json::to_string_pretty(&raiz).unwrap_or_default())
         .map_err(|e| format!("não consegui gravar {}: {e}", alvo.display()))?;
-    println!("servidor registrado em {}", alvo.display());
+    println!("{}", tf("cli.mcp.registered", &[("path", &alvo.display().to_string())]));
 
     let n = deployer::settings::permitir_tools(&perms)?;
-    println!("{n} permissão(ões) de tool liberada(s) no settings.json.");
-    println!("\nas tools ficam disponíveis pro agente na PRÓXIMA sessão do Claude Code:");
+    println!("{}", tf("cli.mcp.allowed", &[("count", &n.to_string())]));
+    println!("\n{}", t("cli.mcp.next_session"));
     for p in &perms {
         println!("  {p}");
     }
-    println!("\ndica: `schematize vps hooks --on` fecha a porta errada (ssh cru) enquanto esta abre a certa.");
+    println!("\n{}", t("cli.mcp.hint_hooks"));
     Ok(())
 }
 
@@ -98,12 +99,12 @@ fn desinstalar() -> Result<(), String> {
     if removeu {
         std::fs::write(&alvo, serde_json::to_string_pretty(&raiz).unwrap_or_default())
             .map_err(|e| format!("não consegui gravar {}: {e}", alvo.display()))?;
-        println!("servidor removido de {}", alvo.display());
+        println!("{}", tf("cli.mcp.removed", &[("path", &alvo.display().to_string())]));
     } else {
-        println!("o servidor não estava registrado em {}", alvo.display());
+        println!("{}", tf("cli.mcp.was_absent", &[("path", &alvo.display().to_string())]));
     }
     let n = deployer::settings::remover_tools(&mcp::nomes_de_permissao())?;
-    println!("{n} permissão(ões) removida(s) do settings.json.");
+    println!("{}", tf("cli.mcp.perms_removed", &[("count", &n.to_string())]));
     Ok(())
 }
 
@@ -115,13 +116,25 @@ fn estado() -> Result<(), String> {
         .get("mcpServers")
         .and_then(|s| s.get(deployer::mcp::protocolo::NOME_DO_SERVIDOR))
         .is_some();
-    println!("arquivo   : {}", alvo.display());
-    println!("registrado: {}", if registrado { "sim" } else { "não" });
+    println!("{}", tf("cli.mcp.file", &[("path", &alvo.display().to_string())]));
+    println!(
+        "{}",
+        tf(
+            "cli.mcp.is_registered",
+            &[("value", &t(if registrado { "common.yes" } else { "common.no" }))]
+        )
+    );
     let perms = mcp::nomes_de_permissao();
     let liberadas = deployer::settings::tools_permitidas(&perms);
-    println!("permitidas: {}/{} tools", liberadas, perms.len());
+    println!(
+        "{}",
+        tf(
+            "cli.mcp.allowed_count",
+            &[("allowed", &liberadas.to_string()), ("total", &perms.len().to_string())]
+        )
+    );
     if !registrado || liberadas < perms.len() {
-        println!("\nrode `schematize mcp install` (ou `--dry-run` pra só ver o que mudaria).");
+        println!("\n{}", t("cli.mcp.run_install"));
     }
     Ok(())
 }

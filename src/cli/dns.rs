@@ -22,6 +22,7 @@ use deployer::dns::{
     credencial, operacoes as ops,
     politica::Acao,
 };
+use deployer::nucleo::i18n::{t, tf};
 
 /// **O quê:** a passphrase do cofre, pelo terminal (ou stdin, sem terminal).
 ///
@@ -54,8 +55,8 @@ fn confirmar(motivo: &str, o_que: &str) -> bool {
     use std::io::Write;
     eprintln!();
     eprintln!("  {o_que}");
-    eprintln!("  motivo: {motivo}");
-    eprint!("  confirmar? (s/N) ");
+    eprintln!("{}", tf("cli.dns.reason", &[("reason", motivo)]));
+    eprint!("{} ", t("common.confirm"));
     let _ = std::io::stderr().flush();
     let mut l = String::new();
     if std::io::stdin().read_line(&mut l).is_err() {
@@ -73,10 +74,10 @@ pub(crate) fn dns_cmd(sub: DnsCmd) -> Result<(), String> {
                 let s = deployer::cofre::segredos::carregar(&pass)?;
                 if credencial::existe(&s) {
                     // Diz QUE existe, nunca QUAL é.
-                    println!("token da Cloudflare: guardado no cofre");
+                    println!("{}", t("cli.dns.token_present"));
                 } else {
-                    println!("token da Cloudflare: não guardado");
-                    println!("  guarde um com `deployer dns auth`");
+                    println!("{}", t("cli.dns.token_absent"));
+                    println!("{}", t("cli.dns.token_hint"));
                 }
                 return Ok(());
             }
@@ -88,9 +89,9 @@ pub(crate) fn dns_cmd(sub: DnsCmd) -> Result<(), String> {
                 );
                 return Ok(());
             }
-            println!("Cole o token de API da Cloudflare (ele não aparece na tela).");
-            println!("Crie um em: https://dash.cloudflare.com/profile/api-tokens");
-            println!("Permissões necessárias: Zone:Read e DNS:Edit das zonas que for gerir.");
+            println!("{}", t("cli.dns.paste_token"));
+            println!("{}", t("cli.dns.create_token"));
+            println!("{}", t("cli.dns.token_perms"));
             let token = crate::cli::cofre::ler_passphrase_pub("token: ")?;
             let substituiu = credencial::guardar(&pass, &token)?;
             println!(
@@ -109,10 +110,15 @@ pub(crate) fn dns_cmd(sub: DnsCmd) -> Result<(), String> {
             let cf = cliente()?;
             let zs = ops::zonas(&cf)?;
             if zs.is_empty() {
-                println!("nenhuma zona nesta conta (o token tem permissão Zone:Read?)");
+                println!("{}", t("cli.dns.no_zones"));
                 return Ok(());
             }
-            println!("{:<34} {:<24} STATUS", "ID", "ZONA");
+            println!(
+                "{:<34} {:<24} {}",
+                t("cli.dns.col_id"),
+                t("cli.dns.col_zone"),
+                t("cli.dns.col_status")
+            );
             for z in zs {
                 println!("{:<34} {:<24} {}", z.id, z.name, z.status);
             }
@@ -133,7 +139,14 @@ pub(crate) fn dns_cmd(sub: DnsCmd) -> Result<(), String> {
                 );
                 return Ok(());
             }
-            println!("{:<34} {:<7} {:<34} {:<8} CONTEÚDO", "ID", "TIPO", "NOME", "TTL");
+            println!(
+                "{:<34} {:<7} {:<34} {:<8} {}",
+                t("cli.dns.col_id"),
+                t("cli.dns.col_type"),
+                t("cli.dns.col_name"),
+                t("cli.dns.col_ttl"),
+                t("cli.dns.col_content")
+            );
             for r in rs {
                 let ttl = if r.ttl == 1 { "auto".to_string() } else { r.ttl.to_string() };
                 let prox = if r.proxied { " (proxied)" } else { "" };
@@ -156,7 +169,13 @@ pub(crate) fn dns_cmd(sub: DnsCmd) -> Result<(), String> {
                     confirmar(m, &format!("criar {} {} → {}", n.tipo, n.name, n.content))
                 });
             let r = ops::criar(&cf, &zid, &zona, &n, ok)?;
-            println!("criado: {} {} {} → {}", r.id, r.tipo, r.name, r.content);
+            println!(
+                "{}",
+                tf(
+                    "cli.dns.created",
+                    &[("id", &r.id), ("type", &r.tipo), ("name", &r.name), ("content", &r.content)]
+                )
+            );
             Ok(())
         }
 
@@ -185,7 +204,13 @@ pub(crate) fn dns_cmd(sub: DnsCmd) -> Result<(), String> {
                 });
             let id = atual.id.clone();
             let r = ops::atualizar(&cf, &zid, &zona, &id, &n, ok)?;
-            println!("alterado: {} {} {} → {}", r.id, r.tipo, r.name, r.content);
+            println!(
+                "{}",
+                tf(
+                    "cli.dns.changed",
+                    &[("id", &r.id), ("type", &r.tipo), ("name", &r.name), ("content", &r.content)]
+                )
+            );
             Ok(())
         }
 
@@ -202,7 +227,13 @@ pub(crate) fn dns_cmd(sub: DnsCmd) -> Result<(), String> {
                     confirmar(m, &format!("REMOVER {} {} → {}", alvo.tipo, alvo.name, alvo.content))
                 });
             ops::remover(&cf, &zid, &zona, &alvo, ok)?;
-            println!("removido: {} {} {}", alvo.id, alvo.tipo, alvo.name);
+            println!(
+                "{}",
+                tf(
+                    "cli.dns.deleted",
+                    &[("id", &alvo.id), ("type", &alvo.tipo), ("name", &alvo.name)]
+                )
+            );
             Ok(())
         }
     }
