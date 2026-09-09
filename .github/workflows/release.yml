@@ -43,12 +43,12 @@ jobs:
       matrix:
         include:
           - runner: ubuntu-latest
-            asset: deployer-linux-x86_64
+            asset: schematize-deployer-linux-x86_64
           # `macos-15` e nao `macos-14`: a 14 ja esta marcada DEPRECATED no
           # `actions/runner-images` (issue 13518), a caminho do mesmo destino da 13 descrito
           # logo abaixo. Trocar antes de a imagem sumir custa esta linha.
           - runner: macos-15
-            asset: deployer-macos-arm64
+            asset: schematize-deployer-macos-arm64
           # Intel CROSS-COMPILADO no runner arm64, e nao numa imagem macOS x64.
           #
           # A familia de imagens x64 do macOS e a que vem sendo aposentada, e o modo de falha
@@ -62,9 +62,9 @@ jobs:
           # E o mesmo desenho que o CLI, o updater e o market ja usam.
           - runner: macos-15
             target: x86_64-apple-darwin
-            asset: deployer-macos-x86_64
+            asset: schematize-deployer-macos-x86_64
           - runner: windows-latest
-            asset: deployer-windows-x86_64.exe
+            asset: schematize-deployer-windows-x86_64.exe
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4

@@ -469,3 +469,38 @@ mod tests {
         );
     }
 }
+
+#[cfg(test)]
+mod tests_assets {
+    /// **O quê:** todo asset publicado começa com o nome do BINÁRIO.
+    ///
+    /// **O buraco que isto fecha.** O binário virou `schematize-deployer` no ADR-0012, e o
+    /// `release.yml` seguiu publicando `deployer-linux-x86_64`. Ninguém consumia esses assets
+    /// ainda (o `install.sh` compila do fonte), então não quebrou nada — mas era a terceira
+    /// vez, no mesmo repo, que um rename parava no meio do caminho:
+    ///
+    /// 1. `deployer_bin()` procurando o nome velho — deixou o update morto por um release
+    /// 2. os testes chamando `CARGO_BIN_EXE_deployer` — reprovaram no CI
+    /// 3. os nomes de asset — este
+    ///
+    /// Um guard que compare os assets publicados com a matriz NÃO pegaria: os dois lados
+    /// diziam `deployer-`. O que pega é ancorar no nome do binário, que é o que a pessoa
+    /// digita e o único nome que não pode divergir de si mesmo.
+    #[test]
+    fn todo_asset_do_release_comeca_com_o_nome_do_binario() {
+        let yml = include_str!("../../.github/workflows/release.yml");
+        let bin = env!("CARGO_BIN_NAME");
+        let assets: Vec<&str> = yml
+            .lines()
+            .filter_map(|l| l.trim().strip_prefix("asset: "))
+            .chain(yml.lines().filter_map(|l| l.trim().strip_prefix("asset_gui: ")))
+            .collect();
+        assert!(!assets.is_empty(), "o parser não achou asset nenhum — ele quebrou");
+        for a in assets {
+            assert!(
+                a.starts_with(bin),
+                "o asset `{a}` não começa com `{bin}` — um rename parou no meio do caminho"
+            );
+        }
+    }
+}
