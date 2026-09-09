@@ -39,6 +39,7 @@ fn vps(db: &PathBuf, args: &[&str]) -> (String, bool) {
     let out = Command::new(binario())
         .arg("vps")
         .args(args)
+        .env("HOME", home_com_chave("t"))
         .env("SCHEMATIZE_VPS_DB", db)
         .output()
         .expect("binário compilado");

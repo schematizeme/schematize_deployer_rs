@@ -37,6 +37,7 @@ fn db(nome: &str) -> PathBuf {
 fn conversar(db: &PathBuf, linhas: &[&str]) -> Vec<serde_json::Value> {
     let mut filho = Command::new(binario())
         .args(["mcp", "serve"])
+        .env("HOME", home_com_chave("t"))
         .env("SCHEMATIZE_VPS_DB", db)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
