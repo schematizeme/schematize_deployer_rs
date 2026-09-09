@@ -18,7 +18,16 @@ fn binario() -> PathBuf {
     if p.ends_with("deps") {
         p.pop();
     }
-    p.join("deployer")
+    // `CARGO_BIN_EXE_…` e nao um nome montado a mao: o Cargo garante o caminho do binario
+    // DESTE alvo, e um rename passa a ser problema do Cargo em vez de virar teste procurando
+    // arquivo que nao existe mais.
+    //
+    // Foi exatamente isso que aconteceu: o binario virou `schematize-deployer` (ADR-0012) e
+    // estes testes seguiram procurando `deployer`. Passavam na maquina de quem desenvolve,
+    // porque havia um binario ANTIGO sobrando no target, e reprovaram no CI, que compila do
+    // zero. Um teste que depende do lixo do seu proprio target nao esta testando o codigo.
+    let _ = p;
+    PathBuf::from(env!("CARGO_BIN_EXE_schematize-deployer"))
 }
 
 /// Variantes declaradas de um `enum` do `clap`, lidas do fonte.
