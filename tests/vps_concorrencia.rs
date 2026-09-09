@@ -181,6 +181,7 @@ fn banco_sobrevive_a_processo_morto_no_meio() {
     // Mata um processo enquanto ele trabalha.
     let mut filho = Command::new(binario())
         .args(["vps", "exec", "srv", "--", "durante"])
+        .env("HOME", home_com_chave("t"))
         .env("SCHEMATIZE_VPS_DB", &db)
         .spawn()
         .expect("spawn");
@@ -196,4 +197,36 @@ fn banco_sobrevive_a_processo_morto_no_meio() {
     assert!(saida.contains("depois"), "não dá mais pra escrever após processo morto:\n{saida}");
     let _ = ok;
     let _ = std::fs::remove_file(&db);
+}
+
+/// **O quê:** um `$HOME` temporário com UMA chave SSH de verdade, e devolve o caminho.
+///
+/// **Onde:** todo teste que chama `vps add`, porque desde o seletor de chave o `--key` é
+/// VALIDADO contra `~/.ssh` — registrar host apontando para chave inexistente deixou de ser
+/// possível, que era o ponto.
+///
+/// **Por que gerar em vez de usar a chave da máquina.** Estes testes passavam `--key
+/// id_ed25519` e funcionavam — porque essa chave existia no `~/.ssh` de quem desenvolve. No
+/// runner do CI não existe, e reprovaram todos. É a mesma armadilha do binário velho no
+/// `target/`: o teste passava por causa do AMBIENTE, não do código, e a diferença só aparecia
+/// depois do push.
+fn home_com_chave(nome: &str) -> std::path::PathBuf {
+    // Contador atômico no caminho: os testes rodam em PARALELO, e sem ele dois deles
+    // disputavam o mesmo diretório — um apagava o `~/.ssh` que o outro tinha acabado de criar,
+    // e o `ssh-keygen` do segundo falhava com stderr VAZIO. Um flaky que só aparece sob
+    // concorrência é o pior de diagnosticar: some quando se roda o teste sozinho.
+    static N: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+    let seq = N.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    let h = std::env::temp_dir().join(format!("sd-home-{nome}-{}-{seq}", std::process::id()));
+    let ssh = h.join(".ssh");
+    let _ = std::fs::remove_dir_all(&h);
+    std::fs::create_dir_all(&ssh).expect("criar ~/.ssh temporário");
+    let k = ssh.join("id_ed25519");
+    let st = Command::new("ssh-keygen")
+        .args(["-t", "ed25519", "-N", "", "-C", "teste", "-f"])
+        .arg(&k)
+        .output()
+        .expect("ssh-keygen precisa existir — o próprio app depende dele");
+    assert!(st.status.success(), "ssh-keygen falhou: {}", String::from_utf8_lossy(&st.stderr));
+    h
 }
