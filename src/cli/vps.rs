@@ -22,6 +22,10 @@ pub(crate) fn vps_cmd(sub: VpsCmd) -> Result<(), String> {
         }
         VpsCmd::Hooks { on, off } => hooks(on, off),
         VpsCmd::Add { alias, host, user, key, port, env, jump } => {
+            // A chave vem do `--key` ou da LISTA. Digitar caminho é o que fazia um perfil
+            // nascer apontando para chave inexistente, com a falha só aparecendo na primeira
+            // conexão — longe, no tempo e na tela, de onde foi causada.
+            let key = vps::escolher::resolver(key)?;
             let conn = vps::db::open()?;
             let mut p = vps::VpsProfile::novo(&alias, &host, &user, &key);
             p.port = port;

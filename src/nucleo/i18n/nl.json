@@ -51,5 +51,9 @@
   "ssh.list_header": "SSH-sleutels (~/.ssh):",
   "ssh.paste_hint": "Druk daarna op Ctrl-D op een lege regel.",
   "ssh.paste_prompt": "Plak hieronder de PRIVÉ-sleutel (die wordt nooit getoond).",
-  "ssh.removed": "sleutel verwijderd: {name}"
+  "ssh.removed": "sleutel verwijderd: {name}",
+  "vps.pick_generate": "g) een nieuw sleutelpaar maken",
+  "vps.pick_import": "i) een bestaande sleutel importeren (bestand of plakken)",
+  "vps.pick_prompt": "Keuze (nummer, naam, g of i):",
+  "vps.pick_title": "Welke SSH-sleutel moet deze host gebruiken?"
 }

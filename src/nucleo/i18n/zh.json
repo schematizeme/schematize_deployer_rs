@@ -51,5 +51,9 @@
   "ssh.list_header": "SSH 密钥（~/.ssh）：",
   "ssh.paste_hint": "完成后在空行按 Ctrl-D。",
   "ssh.paste_prompt": "在下方粘贴私钥（不会回显）。",
-  "ssh.removed": "已删除密钥：{name}"
+  "ssh.removed": "已删除密钥：{name}",
+  "vps.pick_generate": "g) 生成新密钥对",
+  "vps.pick_import": "i) 导入已有密钥（文件或粘贴）",
+  "vps.pick_prompt": "选择（编号、名称、g 或 i）：",
+  "vps.pick_title": "此主机使用哪个 SSH 密钥？"
 }

@@ -51,5 +51,9 @@
   "ssh.list_header": "SSH 鍵 (~/.ssh):",
   "ssh.paste_hint": "終わったら空行で Ctrl-D を押します。",
   "ssh.paste_prompt": "下に秘密鍵を貼り付けてください（表示されません）。",
-  "ssh.removed": "鍵を削除しました: {name}"
+  "ssh.removed": "鍵を削除しました: {name}",
+  "vps.pick_generate": "g) 新しい鍵ペアを生成",
+  "vps.pick_import": "i) 既存の鍵を取り込む（ファイルまたは貼り付け）",
+  "vps.pick_prompt": "選択（番号・名前・g・i）:",
+  "vps.pick_title": "このホストはどの SSH 鍵を使いますか？"
 }

@@ -51,5 +51,9 @@
   "ssh.list_header": "SSH 키 (~/.ssh):",
   "ssh.paste_hint": "끝나면 빈 줄에서 Ctrl-D 를 누르세요.",
   "ssh.paste_prompt": "아래에 개인 키를 붙여넣으세요 (화면에 표시되지 않습니다).",
-  "ssh.removed": "제거된 키: {name}"
+  "ssh.removed": "제거된 키: {name}",
+  "vps.pick_generate": "g) 새 키 쌍 생성",
+  "vps.pick_import": "i) 기존 키 가져오기 (파일 또는 붙여넣기)",
+  "vps.pick_prompt": "선택 (번호, 이름, g 또는 i):",
+  "vps.pick_title": "이 호스트는 어떤 SSH 키를 사용하나요?"
 }

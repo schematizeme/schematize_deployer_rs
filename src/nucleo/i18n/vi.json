@@ -51,5 +51,9 @@
   "ssh.list_header": "khóa SSH (~/.ssh):",
   "ssh.paste_hint": "Xong thì nhấn Ctrl-D ở dòng trống.",
   "ssh.paste_prompt": "Dán khóa RIÊNG TƯ bên dưới (không bao giờ hiển thị lại).",
-  "ssh.removed": "khóa đã gỡ bỏ: {name}"
+  "ssh.removed": "khóa đã gỡ bỏ: {name}",
+  "vps.pick_generate": "g) tạo cặp khóa mới",
+  "vps.pick_import": "i) nhập khóa bạn đã có (tệp hoặc dán)",
+  "vps.pick_prompt": "Lựa chọn (số, tên, g hoặc i):",
+  "vps.pick_title": "Máy chủ này dùng khóa SSH nào?"
 }

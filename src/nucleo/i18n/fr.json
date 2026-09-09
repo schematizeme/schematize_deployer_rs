@@ -51,5 +51,9 @@
   "ssh.list_header": "clés SSH (~/.ssh) :",
   "ssh.paste_hint": "Quand c'est fait, appuyez sur Ctrl-D sur une ligne vide.",
   "ssh.paste_prompt": "Collez la clé PRIVÉE ci-dessous (elle n'est jamais réaffichée).",
-  "ssh.removed": "clé supprimée : {name}"
+  "ssh.removed": "clé supprimée : {name}",
+  "vps.pick_generate": "g) générer une nouvelle paire",
+  "vps.pick_import": "i) importer une clé existante (fichier ou collage)",
+  "vps.pick_prompt": "Choix (numéro, nom, g ou i) :",
+  "vps.pick_title": "Quelle clé SSH cet hôte doit-il utiliser ?"
 }

@@ -155,5 +155,9 @@
   "ssh.list_header": "SSH keys (~/.ssh):",
   "ssh.paste_hint": "When you are done, press Ctrl-D on an empty line.",
   "ssh.paste_prompt": "Paste the PRIVATE key below (it is never echoed).",
-  "ssh.removed": "removed key: {name}"
+  "ssh.removed": "removed key: {name}",
+  "vps.pick_generate": "g) generate a new key pair",
+  "vps.pick_import": "i) import a key you already have (file or paste)",
+  "vps.pick_prompt": "Choice (number, name, g or i):",
+  "vps.pick_title": "Which SSH key should this host use?"
 }

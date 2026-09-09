@@ -51,5 +51,9 @@
   "ssh.list_header": "SSH कुंजियाँ (~/.ssh):",
   "ssh.paste_hint": "पूरा होने पर खाली पंक्ति में Ctrl-D दबाएँ।",
   "ssh.paste_prompt": "नीचे निजी कुंजी पेस्ट करें (वह कभी नहीं दिखाई जाती)।",
-  "ssh.removed": "कुंजी हटाई गई: {name}"
+  "ssh.removed": "कुंजी हटाई गई: {name}",
+  "vps.pick_generate": "g) नई कुंजी जोड़ी बनाएँ",
+  "vps.pick_import": "i) मौजूदा कुंजी आयात करें (फ़ाइल या पेस्ट)",
+  "vps.pick_prompt": "चुनाव (संख्या, नाम, g या i):",
+  "vps.pick_title": "यह होस्ट कौन-सी SSH कुंजी उपयोग करे?"
 }

@@ -249,9 +249,9 @@ pub(crate) enum VpsCmd {
         host: String,
         #[arg(long)]
         user: String,
-        /// Nome da chave gerenciada em ~/.ssh (veja `schematize ssh list`).
+        /// Managed key in ~/.ssh. OMIT IT to pick from a list instead of typing a path.
         #[arg(long)]
-        key: String,
+        key: Option<String>,
         #[arg(long, default_value_t = 22)]
         port: u16,
         /// Ambiente: dev | hml | prd. Qualquer outra coisa vira `prd` (falha fechada).

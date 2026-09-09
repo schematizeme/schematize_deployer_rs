@@ -51,5 +51,9 @@
   "ssh.list_header": "klucze SSH (~/.ssh):",
   "ssh.paste_hint": "Po zakończeniu naciśnij Ctrl-D w pustym wierszu.",
   "ssh.paste_prompt": "Wklej klucz PRYWATNY poniżej (nigdy nie jest wyświetlany).",
-  "ssh.removed": "usunięto klucz: {name}"
+  "ssh.removed": "usunięto klucz: {name}",
+  "vps.pick_generate": "g) wygeneruj nową parę kluczy",
+  "vps.pick_import": "i) zaimportuj klucz, który masz (plik lub wklejenie)",
+  "vps.pick_prompt": "Wybór (numer, nazwa, g lub i):",
+  "vps.pick_title": "Którego klucza SSH ma używać ten host?"
 }

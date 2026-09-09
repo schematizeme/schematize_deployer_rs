@@ -51,5 +51,9 @@
   "ssh.list_header": "مفاتيح SSH (~/.ssh):",
   "ssh.paste_hint": "عند الانتهاء، اضغط Ctrl-D في سطر فارغ.",
   "ssh.paste_prompt": "الصق المفتاح الخاص أدناه (لا يُعرض مرة أخرى).",
-  "ssh.removed": "تمت إزالة المفتاح: {name}"
+  "ssh.removed": "تمت إزالة المفتاح: {name}",
+  "vps.pick_generate": "g) إنشاء زوج مفاتيح جديد",
+  "vps.pick_import": "i) استيراد مفتاح لديك (ملف أو لصق)",
+  "vps.pick_prompt": "الاختيار (رقم أو اسم أو g أو i):",
+  "vps.pick_title": "أي مفتاح SSH يستخدمه هذا المضيف؟"
 }

@@ -51,5 +51,9 @@
   "ssh.list_header": "kunci SSH (~/.ssh):",
   "ssh.paste_hint": "Setelah selesai, tekan Ctrl-D di baris kosong.",
   "ssh.paste_prompt": "Tempel kunci PRIVAT di bawah (tidak pernah ditampilkan kembali).",
-  "ssh.removed": "kunci dihapus: {name}"
+  "ssh.removed": "kunci dihapus: {name}",
+  "vps.pick_generate": "g) buat pasangan kunci baru",
+  "vps.pick_import": "i) impor kunci yang sudah ada (berkas atau tempel)",
+  "vps.pick_prompt": "Pilihan (nomor, nama, g atau i):",
+  "vps.pick_title": "Kunci SSH mana yang dipakai host ini?"
 }

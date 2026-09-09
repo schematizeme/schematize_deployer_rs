@@ -51,5 +51,9 @@
   "ssh.list_header": "SSH-Schlüssel (~/.ssh):",
   "ssh.paste_hint": "Danach Strg-D in einer leeren Zeile drücken.",
   "ssh.paste_prompt": "Fügen Sie unten den PRIVATEN Schlüssel ein (er wird nie zurückgegeben).",
-  "ssh.removed": "Schlüssel entfernt: {name}"
+  "ssh.removed": "Schlüssel entfernt: {name}",
+  "vps.pick_generate": "g) neues Schlüsselpaar erzeugen",
+  "vps.pick_import": "i) vorhandenen Schlüssel importieren (Datei oder Einfügen)",
+  "vps.pick_prompt": "Auswahl (Nummer, Name, g oder i):",
+  "vps.pick_title": "Welchen SSH-Schlüssel soll dieser Host verwenden?"
 }

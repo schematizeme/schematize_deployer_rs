@@ -51,5 +51,9 @@
   "ssh.list_header": "کلیدهای SSH (~/.ssh):",
   "ssh.paste_hint": "پس از پایان، در یک خط خالی Ctrl-D را بزنید.",
   "ssh.paste_prompt": "کلید خصوصی را در زیر بچسبانید (هرگز نمایش داده نمی‌شود).",
-  "ssh.removed": "کلید حذف شد: {name}"
+  "ssh.removed": "کلید حذف شد: {name}",
+  "vps.pick_generate": "g) ساخت جفت‌کلید تازه",
+  "vps.pick_import": "i) وارد کردن کلیدی که دارید (فایل یا چسباندن)",
+  "vps.pick_prompt": "انتخاب (شماره، نام، g یا i):",
+  "vps.pick_title": "این میزبان از کدام کلید SSH استفاده کند؟"
 }

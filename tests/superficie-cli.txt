@@ -111,7 +111,7 @@ CMD schematize-deployer vps add
   ARG env                  --env
   ARG host                 --host OBRIGATORIO
   ARG jump                 --jump
-  ARG key                  --key OBRIGATORIO
+  ARG key                  --key
   ARG port                 --port
   ARG user                 --user OBRIGATORIO
 CMD schematize-deployer vps authorize

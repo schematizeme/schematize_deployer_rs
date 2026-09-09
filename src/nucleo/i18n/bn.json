@@ -51,5 +51,9 @@
   "ssh.list_header": "SSH কী (~/.ssh):",
   "ssh.paste_hint": "শেষ হলে ফাঁকা লাইনে Ctrl-D চাপুন।",
   "ssh.paste_prompt": "নিচে ব্যক্তিগত কী পেস্ট করুন (কখনও দেখানো হয় না)।",
-  "ssh.removed": "কী সরানো হয়েছে: {name}"
+  "ssh.removed": "কী সরানো হয়েছে: {name}",
+  "vps.pick_generate": "g) নতুন কী জোড়া তৈরি করুন",
+  "vps.pick_import": "i) আপনার কাছে থাকা কী আমদানি করুন (ফাইল বা পেস্ট)",
+  "vps.pick_prompt": "পছন্দ (সংখ্যা, নাম, g বা i):",
+  "vps.pick_title": "এই হোস্ট কোন SSH কী ব্যবহার করবে?"
 }

@@ -155,5 +155,9 @@
   "ssh.list_header": "chaves SSH (~/.ssh):",
   "ssh.paste_hint": "Ao terminar, pressione Ctrl-D numa linha vazia.",
   "ssh.paste_prompt": "Cole a chave PRIVADA abaixo (ela nunca é exibida de volta).",
-  "ssh.removed": "chave removida: {name}"
+  "ssh.removed": "chave removida: {name}",
+  "vps.pick_generate": "g) gerar um par novo",
+  "vps.pick_import": "i) importar uma chave que você já tem (arquivo ou colagem)",
+  "vps.pick_prompt": "Escolha (número, nome, g ou i):",
+  "vps.pick_title": "Qual chave SSH este host deve usar?"
 }

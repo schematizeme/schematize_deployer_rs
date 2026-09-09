@@ -51,5 +51,9 @@
   "ssh.list_header": "SSH anahtarları (~/.ssh):",
   "ssh.paste_hint": "Bitince boş bir satırda Ctrl-D tuşlayın.",
   "ssh.paste_prompt": "ÖZEL anahtarı aşağıya yapıştırın (asla geri gösterilmez).",
-  "ssh.removed": "kaldırılan anahtar: {name}"
+  "ssh.removed": "kaldırılan anahtar: {name}",
+  "vps.pick_generate": "g) yeni anahtar çifti üret",
+  "vps.pick_import": "i) elindeki anahtarı içe aktar (dosya veya yapıştır)",
+  "vps.pick_prompt": "Seçim (numara, ad, g veya i):",
+  "vps.pick_title": "Bu sunucu hangi SSH anahtarını kullansın?"
 }

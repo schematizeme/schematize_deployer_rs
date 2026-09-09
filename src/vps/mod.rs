@@ -32,6 +32,7 @@ pub mod capacidade;
 pub mod catastrofico;
 pub mod conexao;
 pub mod db;
+pub mod escolher;
 pub mod exec;
 pub mod hook;
 pub mod politica;
