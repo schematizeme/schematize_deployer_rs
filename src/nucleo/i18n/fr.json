@@ -49,5 +49,7 @@
   "ssh.imported": "{name} importée ({kind}) dans ~/.ssh",
   "ssh.list_empty": "aucune clé SSH dans ~/.ssh.",
   "ssh.list_header": "clés SSH (~/.ssh) :",
+  "ssh.paste_hint": "Quand c'est fait, appuyez sur Ctrl-D sur une ligne vide.",
+  "ssh.paste_prompt": "Collez la clé PRIVÉE ci-dessous (elle n'est jamais réaffichée).",
   "ssh.removed": "clé supprimée : {name}"
 }

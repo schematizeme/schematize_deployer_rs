@@ -49,5 +49,7 @@
   "ssh.imported": "{name} đã được nhập ({kind}) trong ~/.ssh",
   "ssh.list_empty": "không có khóa SSH nào trong ~/.ssh.",
   "ssh.list_header": "khóa SSH (~/.ssh):",
+  "ssh.paste_hint": "Xong thì nhấn Ctrl-D ở dòng trống.",
+  "ssh.paste_prompt": "Dán khóa RIÊNG TƯ bên dưới (không bao giờ hiển thị lại).",
   "ssh.removed": "khóa đã gỡ bỏ: {name}"
 }

@@ -49,5 +49,7 @@
   "ssh.imported": "{name} importiert ({kind}) in ~/.ssh",
   "ssh.list_empty": "keine SSH-Schlüssel in ~/.ssh.",
   "ssh.list_header": "SSH-Schlüssel (~/.ssh):",
+  "ssh.paste_hint": "Danach Strg-D in einer leeren Zeile drücken.",
+  "ssh.paste_prompt": "Fügen Sie unten den PRIVATEN Schlüssel ein (er wird nie zurückgegeben).",
   "ssh.removed": "Schlüssel entfernt: {name}"
 }

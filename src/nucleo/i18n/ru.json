@@ -49,5 +49,7 @@
   "ssh.imported": "{name} импортирован ({kind}) в ~/.ssh",
   "ssh.list_empty": "в ~/.ssh нет SSH-ключей.",
   "ssh.list_header": "SSH-ключи (~/.ssh):",
+  "ssh.paste_hint": "Закончив, нажмите Ctrl-D на пустой строке.",
+  "ssh.paste_prompt": "Вставьте ЗАКРЫТЫЙ ключ ниже (он не отображается).",
   "ssh.removed": "ключ удалён: {name}"
 }

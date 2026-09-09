@@ -49,5 +49,7 @@
   "ssh.imported": "{name} आयात की गई ({kind}) ~/.ssh में",
   "ssh.list_empty": "~/.ssh में कोई SSH कुंजी नहीं।",
   "ssh.list_header": "SSH कुंजियाँ (~/.ssh):",
+  "ssh.paste_hint": "पूरा होने पर खाली पंक्ति में Ctrl-D दबाएँ।",
+  "ssh.paste_prompt": "नीचे निजी कुंजी पेस्ट करें (वह कभी नहीं दिखाई जाती)।",
   "ssh.removed": "कुंजी हटाई गई: {name}"
 }

@@ -49,5 +49,7 @@
   "ssh.imported": "{name} diimpor ({kind}) di ~/.ssh",
   "ssh.list_empty": "tidak ada kunci SSH di ~/.ssh.",
   "ssh.list_header": "kunci SSH (~/.ssh):",
+  "ssh.paste_hint": "Setelah selesai, tekan Ctrl-D di baris kosong.",
+  "ssh.paste_prompt": "Tempel kunci PRIVAT di bawah (tidak pernah ditampilkan kembali).",
   "ssh.removed": "kunci dihapus: {name}"
 }

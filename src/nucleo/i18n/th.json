@@ -49,5 +49,7 @@
   "ssh.imported": "นำเข้า {name} แล้ว ({kind}) ใน ~/.ssh",
   "ssh.list_empty": "ไม่มีคีย์ SSH ใน ~/.ssh",
   "ssh.list_header": "คีย์ SSH (~/.ssh):",
+  "ssh.paste_hint": "เมื่อเสร็จแล้ว กด Ctrl-D ในบรรทัดว่าง",
+  "ssh.paste_prompt": "วางคีย์ส่วนตัวด้านล่าง (จะไม่แสดงกลับ)",
   "ssh.removed": "ลบคีย์แล้ว: {name}"
 }

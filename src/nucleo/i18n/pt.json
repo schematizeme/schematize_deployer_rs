@@ -153,5 +153,7 @@
   "ssh.imported": "{name} importada ({kind}) em ~/.ssh",
   "ssh.list_empty": "nenhuma chave SSH em ~/.ssh.",
   "ssh.list_header": "chaves SSH (~/.ssh):",
+  "ssh.paste_hint": "Ao terminar, pressione Ctrl-D numa linha vazia.",
+  "ssh.paste_prompt": "Cole a chave PRIVADA abaixo (ela nunca é exibida de volta).",
   "ssh.removed": "chave removida: {name}"
 }

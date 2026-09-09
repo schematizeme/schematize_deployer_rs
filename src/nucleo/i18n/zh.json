@@ -49,5 +49,7 @@
   "ssh.imported": "已导入 {name}（{kind}）到 ~/.ssh",
   "ssh.list_empty": "~/.ssh 中没有 SSH 密钥。",
   "ssh.list_header": "SSH 密钥（~/.ssh）：",
+  "ssh.paste_hint": "完成后在空行按 Ctrl-D。",
+  "ssh.paste_prompt": "在下方粘贴私钥（不会回显）。",
   "ssh.removed": "已删除密钥：{name}"
 }

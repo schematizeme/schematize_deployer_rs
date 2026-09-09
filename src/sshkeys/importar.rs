@@ -166,18 +166,48 @@ pub fn import(
         ));
     }
 
-    // 1. Copia para um temporário NO MESMO diretório, já em 600. Ver o cabeçalho: validar na
-    //    origem falharia por permissão no caso mais comum, e temp fora do dir quebra o rename.
-    let tmp_p = dir.join(format!("{name}{TMP_SUFFIX}"));
-    let _ = fs::remove_file(&tmp_p); // resto de uma tentativa anterior interrompida
-    fs::copy(origem, &tmp_p).map_err(|e| format!("não consegui copiar a chave: {e}"))?;
-    crate::util::definir_modo(&tmp_p, 0o600);
-
-    // 2. Valida DE VERDADE: se o ssh-keygen deriva a pública, é chave privada legítima e a
-    //    passphrase (se houver) está certa. Nada de heurística sobre o cabeçalho do arquivo.
     let origem_parece_publica =
         origem.extension().and_then(|e| e.to_str()).map(|e| e.eq_ignore_ascii_case("pub"))
             == Some(true);
+    let bytes = fs::read(origem).map_err(|e| format!("não consegui ler a chave: {e}"))?;
+    gravar_e_validar(&bytes, name, passphrase, comment, force, origem_parece_publica)
+}
+
+/// **O quê:** grava a chave privada em `~/.ssh` com segurança e valida que ela é real.
+///
+/// **Onde:** [`import`] (a partir de arquivo) e [`import_texto`] (a partir de colagem).
+///
+/// ## A ordem aqui é a segurança, e nenhuma etapa é enfeite
+///
+/// 1. **Temporário no MESMO diretório, já em 600.** Validar na origem falharia por permissão no
+///    caso mais comum (chave vinda de backup com modo aberto), e temporário fora do diretório
+///    quebraria o `rename` atômico do passo 3 — `rename` só é atômico dentro do mesmo
+///    filesystem.
+/// 2. **Validação DE VERDADE.** Se o `ssh-keygen` deriva a pública, então é chave privada
+///    legítima e a passphrase (quando há) está certa. Nada de heurística sobre o cabeçalho: um
+///    arquivo que começa com `-----BEGIN` pode ser qualquer coisa.
+/// 3. **`rename` atômico.** Ou a chave está inteira em `~/.ssh`, ou não está — nunca meio
+///    gravada. Uma chave privada truncada é pior que chave nenhuma: ela parece existir.
+///
+/// **É função compartilhada de propósito.** A colagem não pode ter um caminho com menos
+/// verificação que o arquivo — e teria, se cada entrada repetisse estes três passos por conta.
+fn gravar_e_validar(
+    bytes: &[u8],
+    name: &str,
+    passphrase: Option<&str>,
+    comment: Option<&str>,
+    _force: bool,
+    origem_parece_publica: bool,
+) -> Result<KeyInfo, String> {
+    let dir = ensure_ssh_dir()?;
+    let priv_p = dir.join(name);
+    let pub_p = dir.join(format!("{name}.pub"));
+
+    let tmp_p = dir.join(format!("{name}{TMP_SUFFIX}"));
+    let _ = fs::remove_file(&tmp_p); // resto de uma tentativa anterior interrompida
+    fs::write(&tmp_p, bytes).map_err(|e| format!("não consegui gravar a chave: {e}"))?;
+    crate::util::definir_modo(&tmp_p, 0o600);
+
     let linha_pub = match derivar_publica(&tmp_p, passphrase.unwrap_or("")) {
         Ok(l) => l,
         Err(cru) => {
@@ -188,8 +218,6 @@ pub fn import(
     };
     let linha_pub = com_comentario(&linha_pub, comment);
 
-    // 3. Só agora publica o par. `rename` no mesmo diretório é atômico: ou a chave está
-    //    inteira em ~/.ssh, ou não está — nunca meio gravada.
     fs::rename(&tmp_p, &priv_p).map_err(|e| {
         let _ = fs::remove_file(&tmp_p);
         format!("não consegui gravar a privada em ~/.ssh: {e}")
@@ -200,6 +228,73 @@ pub fn import(
     crate::util::definir_modo(&pub_p, 0o644);
 
     read_info(name)
+}
+
+/// **O quê:** normaliza uma chave privada COLADA para o formato que o OpenSSH aceita. PURA.
+///
+/// **Onde:** [`import_texto`], antes de qualquer coisa tocar o disco.
+///
+/// ## Por que isto existe, e por que é a metade que importa da colagem
+///
+/// Chave colada de um cofre de senhas ou de um navegador chega quebrada de jeitos previsíveis,
+/// e o `ssh-keygen` responde a TODOS com o mesmo *"invalid format"*. A pessoa conclui que a
+/// chave está corrompida, quando o que faltava era um `\n`:
+///
+/// - **Sem `\n` final** — o caso mais comum. Copiar o campo de um cofre não leva a quebra de
+///   linha do fim, e o OpenSSH **exige** que o `-----END …-----` termine em nova linha.
+/// - **CRLF** — passou por Windows, por campo de texto web ou por anexo de e-mail.
+/// - **Linhas em branco antes/depois** — do clique que seleciona o parágrafo inteiro.
+/// - **Espaço à direita** nas linhas, de alguns campos de formulário.
+///
+/// O que NÃO se toca: o miolo Base64 e a ordem das linhas. Normalizar conserta **transporte**,
+/// não adivinha conteúdo — se o material estiver mesmo corrompido, a validação por
+/// `ssh-keygen` continua reprovando, que é o certo.
+pub fn normalizar_colado(bruto: &str) -> String {
+    let unificado = bruto.replace("\r\n", "\n").replace('\r', "\n");
+    let linhas: Vec<&str> = unificado.lines().map(str::trim_end).collect();
+    let inicio = linhas.iter().position(|l| !l.trim().is_empty());
+    let fim = linhas.iter().rposition(|l| !l.trim().is_empty());
+    match (inicio, fim) {
+        // O `\n` final é obrigatório — é exatamente o que a colagem de cofre costuma comer.
+        (Some(i), Some(f)) => format!("{}\n", linhas[i..=f].join("\n")),
+        _ => String::new(),
+    }
+}
+
+/// **O quê:** importa uma chave privada a partir de TEXTO colado, sem arquivo nenhum.
+///
+/// **Onde:** `ssh import --paste`, e a janela quando a pessoa cola em vez de escolher arquivo.
+///
+/// ## Por que o texto NUNCA entra por argumento de linha de comando
+///
+/// `--private "-----BEGIN…"` colocaria a chave privada no histórico do shell, no `ps` de
+/// qualquer usuário da máquina e no log de quem audita comando. O texto entra por **stdin**,
+/// que não deixa nenhum desses rastros.
+///
+/// O resto do caminho é IDÊNTICO ao do arquivo — temporário em 600 no mesmo diretório,
+/// validação por `ssh-keygen` (o que prova que é chave de verdade) e `rename` atômico.
+/// Compartilhar esse trecho não é economia de linhas: é o que impede a colagem de ganhar um
+/// caminho com menos verificação que o arquivo.
+pub fn import_texto(
+    texto: &str,
+    name: &str,
+    passphrase: Option<&str>,
+    comment: Option<&str>,
+    force: bool,
+) -> Result<KeyInfo, String> {
+    valid_name(name)?;
+    let conteudo = normalizar_colado(texto);
+    if conteudo.is_empty() {
+        return Err("não veio nada — o texto colado está vazio".into());
+    }
+    // Colar a PÚBLICA por engano é o erro mais provável aqui: quem tem só a `ssh-rsa AAAA…` na
+    // mão acha que aquilo é "a chave". Custa nada dizer ANTES de gravar.
+    if conteudo.starts_with("ssh-") || conteudo.starts_with("ecdsa-") {
+        return Err("isso é a chave PÚBLICA (começa com `ssh-…`). Cole a PRIVADA — o bloco \
+                    entre `-----BEGIN OPENSSH PRIVATE KEY-----` e `-----END …-----`"
+            .to_string());
+    }
+    gravar_e_validar(conteudo.as_bytes(), name, passphrase, comment, force, false)
 }
 
 #[cfg(test)]
@@ -282,5 +377,77 @@ mod tests {
             let e = r.unwrap_err();
             assert!(e.contains("inválido"), "recusa tem de ser pelo NOME, não pelo arquivo: {e}");
         }
+    }
+}
+
+#[cfg(test)]
+mod tests_colagem {
+    use super::*;
+
+    /// **O caso que motivou tudo.** Chave copiada de um gerenciador de senhas vem SEM a quebra
+    /// de linha final, e o OpenSSH exige que o `-----END …-----` termine em `\n`. Medido: o
+    /// texto cru faz o `ssh-keygen` responder `error in libcrypto` — e a pessoa conclui que a
+    /// chave está corrompida, quando o que falta é um caractere.
+    #[test]
+    fn colagem_sem_quebra_final_ganha_a_quebra() {
+        let sem = "-----BEGIN OPENSSH PRIVATE KEY-----\nabc\n-----END OPENSSH PRIVATE KEY-----";
+        assert!(!sem.ends_with('\n'));
+        assert!(normalizar_colado(sem).ends_with("-----END OPENSSH PRIVATE KEY-----\n"));
+    }
+
+    /// Passou por Windows, campo web ou anexo de e-mail: CRLF vira LF.
+    #[test]
+    fn crlf_vira_lf() {
+        let n = normalizar_colado("-----BEGIN X-----\r\nabc\r\n-----END X-----\r\n");
+        assert!(!n.contains('\r'), "sobrou CR: {n:?}");
+        assert_eq!(n, "-----BEGIN X-----\nabc\n-----END X-----\n");
+    }
+
+    /// Clique que seleciona o parágrafo inteiro traz linhas em branco em volta; alguns campos
+    /// de formulário deixam espaço à direita.
+    #[test]
+    fn linhas_em_branco_e_espaco_a_direita_somem() {
+        let n = normalizar_colado("\n\n  -----BEGIN X-----  \nabc   \n-----END X-----\n\n  \n");
+        assert_eq!(n, "  -----BEGIN X-----\nabc\n-----END X-----\n");
+    }
+
+    /// O MIOLO não é tocado: normalizar conserta transporte, não adivinha conteúdo. Se o
+    /// Base64 estiver corrompido de verdade, a validação por `ssh-keygen` tem de reprovar.
+    #[test]
+    fn o_base64_do_meio_nao_e_alterado() {
+        let corpo = "b3BlbnNzaC1rZXktdjEAAAAABG5vbmU";
+        let n = normalizar_colado(&format!("-----BEGIN X-----\n{corpo}\n-----END X-----"));
+        assert!(n.contains(corpo), "o miolo mudou: {n}");
+    }
+
+    /// Texto vazio (ou só espaço) não vira uma chave vazia gravada em `~/.ssh`.
+    #[test]
+    fn vazio_continua_vazio() {
+        assert_eq!(normalizar_colado(""), "");
+        assert_eq!(normalizar_colado("\n\n  \n"), "");
+        assert!(import_texto("   \n", "x", None, None, false).is_err());
+    }
+
+    /// Colar a PÚBLICA por engano é o erro mais provável: quem tem só a `ssh-rsa AAAA…` na mão
+    /// acha que aquilo é "a chave". A mensagem diz o que colar, em vez de "formato inválido".
+    #[test]
+    fn publica_colada_por_engano_e_dita_antes_de_gravar() {
+        let e = import_texto("ssh-ed25519 AAAAC3Nz teste@x\n", "k", None, None, false).unwrap_err();
+        assert!(e.contains("PÚBLICA"), "{e}");
+        assert!(e.contains("BEGIN OPENSSH PRIVATE KEY"), "tem de dizer o que colar: {e}");
+    }
+
+    /// Nome inválido é recusado ANTES de qualquer escrita — o caminho da colagem não pode ter
+    /// menos validação que o do arquivo.
+    #[test]
+    fn nome_invalido_e_recusado_na_colagem_tambem() {
+        assert!(import_texto(
+            "-----BEGIN X-----\nabc\n-----END X-----\n",
+            "../fuga",
+            None,
+            None,
+            false
+        )
+        .is_err());
     }
 }

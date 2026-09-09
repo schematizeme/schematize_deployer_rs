@@ -153,5 +153,7 @@
   "ssh.imported": "{name} imported ({kind}) into ~/.ssh",
   "ssh.list_empty": "no SSH keys in ~/.ssh.",
   "ssh.list_header": "SSH keys (~/.ssh):",
+  "ssh.paste_hint": "When you are done, press Ctrl-D on an empty line.",
+  "ssh.paste_prompt": "Paste the PRIVATE key below (it is never echoed).",
   "ssh.removed": "removed key: {name}"
 }

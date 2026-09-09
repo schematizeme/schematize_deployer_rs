@@ -49,5 +49,7 @@
   "ssh.imported": "{name} وارد شد ({kind}) در ~/.ssh",
   "ssh.list_empty": "هیچ کلید SSH در ~/.ssh نیست.",
   "ssh.list_header": "کلیدهای SSH (~/.ssh):",
+  "ssh.paste_hint": "پس از پایان، در یک خط خالی Ctrl-D را بزنید.",
+  "ssh.paste_prompt": "کلید خصوصی را در زیر بچسبانید (هرگز نمایش داده نمی‌شود).",
   "ssh.removed": "کلید حذف شد: {name}"
 }

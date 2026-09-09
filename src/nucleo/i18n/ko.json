@@ -49,5 +49,7 @@
   "ssh.imported": "{name} 가져옴 ({kind}) ~/.ssh에",
   "ssh.list_empty": "~/.ssh에 SSH 키가 없습니다.",
   "ssh.list_header": "SSH 키 (~/.ssh):",
+  "ssh.paste_hint": "끝나면 빈 줄에서 Ctrl-D 를 누르세요.",
+  "ssh.paste_prompt": "아래에 개인 키를 붙여넣으세요 (화면에 표시되지 않습니다).",
   "ssh.removed": "제거된 키: {name}"
 }

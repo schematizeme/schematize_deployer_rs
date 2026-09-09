@@ -1,6 +1,6 @@
 [package]
 name = "schematize-deployer"
-version = "0.5.0"
+version = "0.6.0"
 edition = "2021"
 description = "schematize Deployer: chaves SSH, VPS e acesso remoto AUDITADO, com a credencial fora do alcance do agente. Funciona sozinho; integra-se ao schematize quando os dois convivem."
 license = "MIT"

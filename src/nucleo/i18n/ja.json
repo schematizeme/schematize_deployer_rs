@@ -49,5 +49,7 @@
   "ssh.imported": "{name} をインポートしました（{kind}）: ~/.ssh",
   "ssh.list_empty": "~/.ssh に SSH 鍵がありません。",
   "ssh.list_header": "SSH 鍵 (~/.ssh):",
+  "ssh.paste_hint": "終わったら空行で Ctrl-D を押します。",
+  "ssh.paste_prompt": "下に秘密鍵を貼り付けてください（表示されません）。",
   "ssh.removed": "鍵を削除しました: {name}"
 }

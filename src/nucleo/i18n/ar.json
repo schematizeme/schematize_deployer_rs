@@ -49,5 +49,7 @@
   "ssh.imported": "تم استيراد {name} ({kind}) إلى ~/.ssh",
   "ssh.list_empty": "لا توجد مفاتيح SSH في ~/.ssh.",
   "ssh.list_header": "مفاتيح SSH (~/.ssh):",
+  "ssh.paste_hint": "عند الانتهاء، اضغط Ctrl-D في سطر فارغ.",
+  "ssh.paste_prompt": "الصق المفتاح الخاص أدناه (لا يُعرض مرة أخرى).",
   "ssh.removed": "تمت إزالة المفتاح: {name}"
 }

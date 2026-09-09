@@ -49,5 +49,7 @@
   "ssh.imported": "{name} geïmporteerd ({kind}) in ~/.ssh",
   "ssh.list_empty": "geen SSH-sleutels in ~/.ssh.",
   "ssh.list_header": "SSH-sleutels (~/.ssh):",
+  "ssh.paste_hint": "Druk daarna op Ctrl-D op een lege regel.",
+  "ssh.paste_prompt": "Plak hieronder de PRIVÉ-sleutel (die wordt nooit getoond).",
   "ssh.removed": "sleutel verwijderd: {name}"
 }

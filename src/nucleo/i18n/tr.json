@@ -49,5 +49,7 @@
   "ssh.imported": "{name} içe aktarıldı ({kind}) ~/.ssh içinde",
   "ssh.list_empty": "~/.ssh içinde SSH anahtarı yok.",
   "ssh.list_header": "SSH anahtarları (~/.ssh):",
+  "ssh.paste_hint": "Bitince boş bir satırda Ctrl-D tuşlayın.",
+  "ssh.paste_prompt": "ÖZEL anahtarı aşağıya yapıştırın (asla geri gösterilmez).",
   "ssh.removed": "kaldırılan anahtar: {name}"
 }

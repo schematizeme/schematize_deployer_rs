@@ -49,5 +49,7 @@
   "ssh.imported": "{name} আমদানি করা হয়েছে ({kind}) ~/.ssh-এ",
   "ssh.list_empty": "~/.ssh-এ কোনো SSH কী নেই।",
   "ssh.list_header": "SSH কী (~/.ssh):",
+  "ssh.paste_hint": "শেষ হলে ফাঁকা লাইনে Ctrl-D চাপুন।",
+  "ssh.paste_prompt": "নিচে ব্যক্তিগত কী পেস্ট করুন (কখনও দেখানো হয় না)।",
   "ssh.removed": "কী সরানো হয়েছে: {name}"
 }

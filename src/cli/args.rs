@@ -183,8 +183,13 @@ pub(crate) enum SshCmd {
     /// Derives the public key from the private one; the private key is copied byte for byte
     /// and keeps its passphrase. Use --passphrase if the key is encrypted.
     Import {
-        /// Path to the PRIVATE key file (not the .pub).
-        file: String,
+        /// Path to the PRIVATE key file (not the .pub). Omit it and use --paste to paste
+        /// the key instead — for keys kept in a password manager, where there is no file.
+        file: Option<String>,
+        /// Paste the PRIVATE key instead of pointing at a file. Reads from stdin, so the key
+        /// never lands in your shell history nor in `ps`.
+        #[arg(long, conflicts_with = "file")]
+        paste: bool,
         /// Name it will have in ~/.ssh (default: the source file name).
         #[arg(long)]
         name: Option<String>,
