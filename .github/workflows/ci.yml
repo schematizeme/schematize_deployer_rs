@@ -31,6 +31,18 @@ jobs:
         with:
           components: clippy, rustfmt
 
+      # O `--locked` PRECISA vir antes de qualquer outro comando cargo, e isso nao e estilo.
+      #
+      # Ele prova que o Cargo.lock COMMITADO resolve. Mas `clippy` e `test` reescrevem o lock
+      # no disco ao rodar — entao, colocado depois deles, o guard media um lock que os passos
+      # anteriores tinham acabado de consertar. Ele passou verde sobre um lock defasado, e a
+      # falha so apareceu no RELEASE, que parte de um checkout limpo: `cannot update the lock
+      # file`, depois da tag cortada.
+      #
+      # Um guard cuja posicao no pipeline o desarma e pior que guard nenhum: ele da o verde.
+      - name: o Cargo.lock commitado resolve (ANTES de qualquer cargo)
+        run: cargo metadata --locked --format-version 1 > /dev/null
+
       - name: cache cargo
         uses: actions/cache@v4
         with:
@@ -64,7 +76,3 @@ jobs:
       - name: testes (segunda passada, caça a flaky)
         run: cargo test --all-targets
 
-      # O build `--locked` prova que o Cargo.lock commitado RESOLVE — sem isto, um lock
-      # desatualizado só aparece na máquina de quem clona.
-      - name: build --locked
-        run: cargo build --locked
