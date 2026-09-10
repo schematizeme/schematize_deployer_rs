@@ -32,6 +32,45 @@ const FALANTES: &[&str] = &[
     "src/cli/cofre.rs",
 ];
 
+/// Os arquivos que falam com uma MÁQUINA, e que por isso ficam FORA do catálogo.
+///
+/// **Onde:** [`o_saidajson_fica_fora_do_catalogo`], que trava esta lista.
+///
+/// ## Por que a ausência precisa ser explícita
+///
+/// O `saidajson.rs` imprime dezenas de linhas com texto literal, e parece exatamente o tipo de
+/// arquivo que alguém acrescentaria ao `FALANTES` achando que foi esquecido. Se acrescentasse,
+/// o gate ficaria vermelho e o "conserto" seria pôr as chaves do JSON no catálogo — que é o
+/// oposto do contrato.
+///
+/// O `--json` é byte a byte idêntico em qualquer idioma, e é isso que o torna contrato. Uma
+/// chave traduzida ali quebra a janela de quem mudou o idioma, **sem erro nenhum** — que é
+/// precisamente o bug que o `--json` existe para acabar.
+const MUDOS: &[&str] = &["src/cli/saidajson.rs"];
+
+/// **A ausência do `saidajson.rs` no `FALANTES` é DECISÃO, não esquecimento.**
+///
+/// Este teste existe para que a próxima pessoa que olhar a lista encontre a razão aqui, em vez
+/// de deduzi-la errado. Ele também garante que o arquivo continua existindo: se ele for
+/// renomeado, este teste reprova e a decisão volta a ser tomada, em vez de sumir com o nome.
+#[test]
+fn o_saidajson_fica_fora_do_catalogo() {
+    let raiz = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+    for arquivo in MUDOS {
+        assert!(
+            raiz.join(arquivo).is_file(),
+            "`{arquivo}` não existe mais — se foi renomeado, atualize esta lista e releia a \
+             razão de ele estar fora do catálogo"
+        );
+        assert!(
+            !FALANTES.contains(arquivo),
+            "`{arquivo}` entrou no FALANTES. Ele imprime CONTRATO, não prosa: o `--json` é byte \
+             a byte idêntico em qualquer idioma, e uma chave traduzida ali quebra a janela de \
+             quem mudou o idioma, sem erro nenhum"
+        );
+    }
+}
+
 /// **O quê:** a linha imprime PROSA fora do catálogo?
 ///
 /// **Onde:** o varredor abaixo. Separada porque a regra é o teste — e uma regra enterrada num
