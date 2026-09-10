@@ -153,7 +153,12 @@ pub(crate) enum VaultCmd {
     /// Create the vault. The passphrase is read from the terminal, without echo, and confirmed.
     Init,
     /// Where the vault is, the file permission, and the KDF strength it was created with.
-    Status,
+    Status {
+        /// Machine-readable output. Says nothing about what is INSIDE the vault — only where
+        /// the file is, how it is protected, and with what KDF cost it was created.
+        #[arg(long)]
+        json: bool,
+    },
     /// Change the passphrase. Rewrites with a new salt, nonce and KDF cost.
     ChangePassphrase,
 }
@@ -204,7 +209,12 @@ pub(crate) enum SshCmd {
         force: bool,
     },
     /// List keys in ~/.ssh (name, type, fingerprint, comment). Never reads the private key.
-    List,
+    List {
+        /// Machine-readable output. Carries the fingerprint — which is public — and never any
+        /// private key material.
+        #[arg(long)]
+        json: bool,
+    },
     /// Print the PUBLIC key (paste it on GitHub/servers); --copy sends it to the clipboard.
     /// With --bitwarden, export the key to Bitwarden instead (item in the vault if `bw` is
     /// unlocked, else a mode-600 import JSON) — the PRIVATE key never hits stdout.
@@ -262,7 +272,12 @@ pub(crate) enum VpsCmd {
         jump: Option<String>,
     },
     /// Lista os hosts registrados, com ambiente, modo e se têm fronteira server-side.
-    List,
+    List {
+        /// Machine-readable output. Stable slugs (`prd`, `readonly`, `root`), never the human
+        /// label — this is what the window reads.
+        #[arg(long)]
+        json: bool,
+    },
     /// Mostra a fingerprint da host key e, com --sim, passa a confiar nela (fim do TOFU cego).
     Trust {
         alias: String,

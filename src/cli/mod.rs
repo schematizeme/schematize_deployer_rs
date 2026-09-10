@@ -8,5 +8,6 @@ pub(crate) mod cofre;
 pub(crate) mod dns;
 pub(crate) mod mcp;
 pub(crate) mod painel;
+pub(crate) mod saidajson;
 pub(crate) mod ssh;
 pub(crate) mod vps;

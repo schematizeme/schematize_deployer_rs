@@ -52,6 +52,7 @@
   "cli.vault.absent": "cofre: não existe ainda (crie com `deployer vault init`)",
   "cli.vault.at": "cofre: {path}",
   "cli.vault.created": "cofre criado em {path}",
+  "cli.vault.header_bad": "formato não reconhecido",
   "cli.vault.header_unreadable": "  cabeçalho ilegível: {error}",
   "cli.vault.kdf": "  kdf: argon2id m={m}KiB t={t} p={p}",
   "cli.vault.kdf_weak": "  NOTA: custo de memória abaixo do padrão atual ({standard}KiB). `trocar-senha` regrava com o custo novo.",

@@ -109,58 +109,13 @@ pub(crate) fn cofre_cmd(sub: crate::cli::args::VaultCmd) -> Result<(), String> {
             Ok(())
         }
 
-        crate::cli::args::VaultCmd::Status => {
-            let p = cofre::arquivo::caminho();
-            if !cofre::arquivo::existe() {
-                println!("{}", t("cli.vault.absent"));
+        crate::cli::args::VaultCmd::Status { json } => {
+            let s = ler_estado();
+            if json {
+                crate::cli::saidajson::vault_status(&s);
                 return Ok(());
             }
-            println!("{}", tf("cli.vault.at", &[("path", &p.display().to_string())]));
-            let bytes = std::fs::metadata(&p).map(|m| m.len()).unwrap_or(0);
-            println!("{}", tf("cli.vault.size", &[("bytes", &bytes.to_string())]));
-            #[cfg(unix)]
-            {
-                use std::os::unix::fs::PermissionsExt;
-                if let Ok(m) = std::fs::metadata(&p) {
-                    let modo = m.permissions().mode() & 0o777;
-                    let ok =
-                        t(if modo == 0o600 { "cli.vault.perm_ok" } else { "cli.vault.perm_bad" });
-                    println!(
-                        "{}",
-                        tf("cli.vault.perm", &[("mode", &format!("{modo:o}")), ("verdict", &ok)])
-                    );
-                }
-            }
-            // O cabeçalho viaja em claro de propósito — é preciso para derivar a chave. Mostrar
-            // os parâmetros deixa auditável se este cofre foi criado com custo forte.
-            match std::fs::read(&p).map_err(|e| e.to_string()).and_then(|b| {
-                cofre::cripto::Cabecalho::ler(&b).map(|c| (c.m_cost, c.t_cost, c.p_cost))
-            }) {
-                Ok((m, tc, pp)) => {
-                    println!(
-                        "{}",
-                        tf(
-                            "cli.vault.kdf",
-                            &[
-                                ("m", &m.to_string()),
-                                ("t", &tc.to_string()),
-                                ("p", &pp.to_string())
-                            ]
-                        )
-                    );
-                    if m < cofre::cripto::M_COST {
-                        println!(
-                            "{}",
-                            tf(
-                                "cli.vault.kdf_weak",
-                                &[("standard", &cofre::cripto::M_COST.to_string())]
-                            )
-                        );
-                    }
-                }
-                Err(e) => println!("{}", tf("cli.vault.header_unreadable", &[("error", &e)])),
-            }
-            Ok(())
+            imprimir_estado(&s)
         }
 
         crate::cli::args::VaultCmd::ChangePassphrase => {
@@ -176,4 +131,105 @@ pub(crate) fn cofre_cmd(sub: crate::cli::args::VaultCmd) -> Result<(), String> {
             Ok(())
         }
     }
+}
+
+/// **O quê:** lê tudo que se sabe do cofre **por fora** — onde está o arquivo, que tamanho e
+/// permissão tem, e com que custo de KDF foi criado.
+///
+/// **Onde:** `vault status`, nos dois formatos.
+///
+/// **Nada aqui abre o cofre.** A passphrase não é pedida, a chave não é derivada e o conteúdo
+/// não é lido. O cabeçalho do arquivo viaja em claro de propósito — é preciso para derivar a
+/// chave —, e é só dele que os três custos saem. É o que torna esta leitura segura o bastante
+/// para uma janela chamar sozinha, sem prompt, ao abrir a tela.
+///
+/// **Por que ela existe separada da impressão:** o relatório humano e o `--json` precisam
+/// exatamente do mesmo estado. Ler duas vezes, cada caminho do seu jeito, é como os dois
+/// divergem — e divergir aqui significa a janela afirmar sobre a proteção do cofre algo que o
+/// terminal nega.
+fn ler_estado() -> crate::cli::saidajson::VaultStatus {
+    let p = cofre::arquivo::caminho();
+    let caminho = p.display().to_string();
+    if !cofre::arquivo::existe() {
+        return crate::cli::saidajson::VaultStatus {
+            existe: false,
+            caminho,
+            bytes: 0,
+            modo: None,
+            kdf: None,
+            kdf_fraco: false,
+        };
+    }
+    let bytes = std::fs::metadata(&p).map(|m| m.len()).unwrap_or(0);
+    let modo = modo_do_arquivo(&p);
+    let kdf = std::fs::read(&p)
+        .map_err(|e| e.to_string())
+        .and_then(|b| cofre::cripto::Cabecalho::ler(&b).map(|c| (c.m_cost, c.t_cost, c.p_cost)))
+        .ok();
+    // Cabeçalho ilegível não é "KDF fraco": é "não sei". Afirmar fraqueza sem dado mandaria a
+    // pessoa trocar a passphrase de um cofre que talvez esteja forte.
+    let kdf_fraco = kdf.map(|(m, _, _)| m < cofre::cripto::M_COST).unwrap_or(false);
+    crate::cli::saidajson::VaultStatus { existe: true, caminho, bytes, modo, kdf, kdf_fraco }
+}
+
+/// **O quê:** a permissão octal do arquivo, ou `None` onde o conceito não existe.
+/// **Onde:** [`ler_estado`].
+///
+/// **O `#[cfg]` está no ITEM, não dentro do corpo.** A primeira versão tinha os dois casos no
+/// mesmo corpo, e no Linux o `return` do ramo unix virava a última expressão — clippy reprovou
+/// com `needless_return`, e o remédio óbvio (tirar o `return`) quebraria o Windows, onde o
+/// bloco seguinte volta a existir. Duas definições da mesma função dizem a mesma coisa sem
+/// esse laço.
+#[cfg(unix)]
+fn modo_do_arquivo(p: &std::path::Path) -> Option<u32> {
+    use std::os::unix::fs::PermissionsExt;
+    std::fs::metadata(p).ok().map(|m| m.permissions().mode() & 0o777)
+}
+
+/// **O quê:** fora de unix não há permissão POSIX a reportar. **Onde:** [`ler_estado`].
+///
+/// `None` e não `Some(0)`: "este sistema não tem esse conceito" é diferente de "o arquivo tem
+/// permissão zero", e a tela do cofre mostra coisas diferentes nos dois casos.
+#[cfg(not(unix))]
+fn modo_do_arquivo(_p: &std::path::Path) -> Option<u32> {
+    None
+}
+
+/// **O quê:** o relatório humano do `vault status`, a partir do estado já lido.
+/// **Onde:** `vault status` sem `--json`.
+fn imprimir_estado(s: &crate::cli::saidajson::VaultStatus) -> Result<(), String> {
+    if !s.existe {
+        println!("{}", t("cli.vault.absent"));
+        return Ok(());
+    }
+    println!("{}", tf("cli.vault.at", &[("path", &s.caminho)]));
+    println!("{}", tf("cli.vault.size", &[("bytes", &s.bytes.to_string())]));
+    if let Some(modo) = s.modo {
+        let ok = t(if modo == 0o600 { "cli.vault.perm_ok" } else { "cli.vault.perm_bad" });
+        println!("{}", tf("cli.vault.perm", &[("mode", &format!("{modo:o}")), ("verdict", &ok)]));
+    }
+    // O cabeçalho viaja em claro de propósito — é preciso para derivar a chave. Mostrar os
+    // parâmetros deixa auditável se este cofre foi criado com custo forte.
+    match s.kdf {
+        Some((m, tc, pp)) => {
+            println!(
+                "{}",
+                tf(
+                    "cli.vault.kdf",
+                    &[("m", &m.to_string()), ("t", &tc.to_string()), ("p", &pp.to_string())]
+                )
+            );
+            if s.kdf_fraco {
+                println!(
+                    "{}",
+                    tf("cli.vault.kdf_weak", &[("standard", &cofre::cripto::M_COST.to_string())])
+                );
+            }
+        }
+        None => println!(
+            "{}",
+            tf("cli.vault.header_unreadable", &[("error", &t("cli.vault.header_bad"))])
+        ),
+    }
+    Ok(())
 }

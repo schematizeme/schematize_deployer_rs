@@ -87,6 +87,7 @@ CMD schematize-deployer ssh import
   ARG paste                --paste
 CMD schematize-deployer ssh list
   SOBRE List keys in ~/.ssh (name, type, fingerprint, comment). Never reads the private key
+  ARG json                 --json
 CMD schematize-deployer ssh rm
   SOBRE Remove a key pair (private + public) with confirmation
   ARG name                  OBRIGATORIO
@@ -103,6 +104,7 @@ CMD schematize-deployer vault init
   SOBRE Create the vault. The passphrase is read from the terminal, without echo, and confirmed
 CMD schematize-deployer vault status
   SOBRE Where the vault is, the file permission, and the KDF strength it was created with
+  ARG json                 --json
 CMD schematize-deployer vps
   SOBRE VPS: host registry + AUDITED remote execution (the agent never sees the key)
 CMD schematize-deployer vps add
@@ -133,6 +135,7 @@ CMD schematize-deployer vps hooks
   ARG on                   --on
 CMD schematize-deployer vps list
   SOBRE Lista os hosts registrados, com ambiente, modo e se têm fronteira server-side
+  ARG json                 --json
 CMD schematize-deployer vps logs
   SOBRE Mostra o que já rodou (alias vazio = todos os hosts)
   ARG alias                

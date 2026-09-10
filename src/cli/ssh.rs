@@ -99,8 +99,15 @@ pub(crate) fn ssh_cmd(sub: SshCmd) -> Result<(), String> {
             }
             Ok(())
         }
-        SshCmd::List => {
+        SshCmd::List { json } => {
             let keys = sshkeys::list();
+            // O JSON vem ANTES do caminho de lista vazia: `[]` é o que a tela de chaves de
+            // quem ainda não tem nenhuma precisa para desenhar "nenhuma chave ainda". Uma
+            // frase humana ali tornaria o documento inválido.
+            if json {
+                super::saidajson::ssh_list(&keys);
+                return Ok(());
+            }
             if keys.is_empty() {
                 println!("{}", t("ssh.list_empty"));
                 return Ok(());

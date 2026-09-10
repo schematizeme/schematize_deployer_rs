@@ -48,7 +48,7 @@ pub(crate) fn vps_cmd(sub: VpsCmd) -> Result<(), String> {
             println!("{}", tf("cli.vps.next_trust", &[("alias", &alias)]));
             Ok(())
         }
-        VpsCmd::List => listar(),
+        VpsCmd::List { json } => listar(json),
         VpsCmd::Trust { alias, sim } => confiar(&alias, sim),
         VpsCmd::Exec { alias, confirmar, comando } => executar(&alias, confirmar, &comando),
         VpsCmd::Logs { alias, n, transcript } => logs(&alias, n, transcript),
@@ -81,10 +81,20 @@ fn hooks(on: bool, off: bool) -> Result<(), String> {
     Ok(())
 }
 
-/// Lista os hosts, marcando os que rodam SEM fronteira server-side.
-fn listar() -> Result<(), String> {
+/// **O quê:** lista os hosts, marcando os que rodam SEM fronteira server-side.
+///
+/// **Onde:** `vps list`, e a tela de hosts da janela via `--json`.
+///
+/// **O JSON vem ANTES do caminho de lista vazia:** `[]` é o que a tela de quem ainda não
+/// registrou host nenhum precisa para desenhar "adicione o primeiro". Uma frase humana ali
+/// tornaria o documento inválido, e a janela mostraria tela vazia sem dizer por quê.
+fn listar(json: bool) -> Result<(), String> {
     let conn = vps::db::open()?;
     let hosts = vps::listar(&conn)?;
+    if json {
+        crate::cli::saidajson::vps_list(&hosts);
+        return Ok(());
+    }
     if hosts.is_empty() {
         println!("{}", t("cli.vps.no_hosts"));
         return Ok(());

@@ -52,6 +52,7 @@
   "cli.vault.absent": "vault: does not exist yet (create it with `deployer vault init`)",
   "cli.vault.at": "vault: {path}",
   "cli.vault.created": "vault created at {path}",
+  "cli.vault.header_bad": "unrecognized format",
   "cli.vault.header_unreadable": "  unreadable header: {error}",
   "cli.vault.kdf": "  kdf: argon2id m={m}KiB t={t} p={p}",
   "cli.vault.kdf_weak": "  NOTE: memory cost below the current standard ({standard}KiB). `change-passphrase` rewrites it with the new cost.",
