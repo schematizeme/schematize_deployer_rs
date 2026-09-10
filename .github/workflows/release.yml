@@ -44,11 +44,13 @@ jobs:
         include:
           - runner: ubuntu-latest
             asset: schematize-deployer-linux-x86_64
+            asset_gui: schematize-deployer-gui-linux-x86_64
           # `macos-15` e nao `macos-14`: a 14 ja esta marcada DEPRECATED no
           # `actions/runner-images` (issue 13518), a caminho do mesmo destino da 13 descrito
           # logo abaixo. Trocar antes de a imagem sumir custa esta linha.
           - runner: macos-15
             asset: schematize-deployer-macos-arm64
+            asset_gui: schematize-deployer-gui-macos-arm64
           # Intel CROSS-COMPILADO no runner arm64, e nao numa imagem macOS x64.
           #
           # A familia de imagens x64 do macOS e a que vem sendo aposentada, e o modo de falha
@@ -63,8 +65,10 @@ jobs:
           - runner: macos-15
             target: x86_64-apple-darwin
             asset: schematize-deployer-macos-x86_64
+            asset_gui: schematize-deployer-gui-macos-x86_64
           - runner: windows-latest
             asset: schematize-deployer-windows-x86_64.exe
+            asset_gui: schematize-deployer-gui-windows-x86_64.exe
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
@@ -94,6 +98,47 @@ jobs:
       - name: build release
         run: cargo build --release --locked ${{ matrix.target && format('--target {0}', matrix.target) || '' }}
 
+      # A JANELA do deployer, publicada AO LADO do binário — o mesmo desenho que o market já
+      # usa (ADR-0014 D5): o dono do binário é o dono da janela dele.
+      #
+      # Ela vive em repo próprio porque não depende deste crate: é `std`-only e fala só com o
+      # binário headless, o que a impede de embutir uma versão via git-dep — o bug que fez a
+      # janela irmã "abrir a versão antiga". Sair DAQUI custa este bloco; um release próprio
+      # custaria outra matriz de quatro alvos e outra tag para lembrar de cortar.
+      #
+      # BEST-EFFORT: se ela não compilar, o release do deployer NÃO falha. O binário headless é
+      # o que precisa chegar; a janela é a interface por cima dele, e falhar o release inteiro
+      # por causa dela inverteria a prioridade.
+      #
+      # As deps de Linux não são opcionais e a ausência delas falha EM SILÊNCIO: com
+      # `continue-on-error: true`, o `conclusion` do passo vira `success` mesmo com
+      # `outcome: failure`. Sem elas o release sairia "verde" com um asset a menos, e o que
+      # faltaria seria justamente o da plataforma principal. Já aconteceu no market.
+      - name: deps da janela (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y \
+            pkg-config \
+            libx11-dev libxcursor-dev libxrandr-dev libxi-dev \
+            libxkbcommon-dev libwayland-dev libgl1-mesa-dev \
+            libxcb1-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev \
+            libfontconfig1-dev
+
+      - name: Janela do deployer (opcional)
+        id: janela
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --depth 1 https://github.com/schematizeme/schematize_deployer_gui_rs.git ../janela
+          cargo build --release --locked --manifest-path ../janela/Cargo.toml \
+            ${{ matrix.target && format('--target {0}', matrix.target) || '' }}
+          dir="../janela/target/${{ matrix.target }}/release"
+          [ -n "${{ matrix.target }}" ] || dir="../janela/target/release"
+          sfx=""; [ "${{ runner.os }}" = "Windows" ] && sfx=".exe"
+          cp "$dir/schematize-deployer-gui$sfx" "${{ matrix.asset_gui }}"
+
       - name: renomeia p/ o nome estável do asset
         shell: bash
         run: |
@@ -111,3 +156,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: gh release upload "${GITHUB_REF_NAME}" "${{ matrix.asset }}" --clobber
+
+      # A janela entra só se o passo dela deu certo — `continue-on-error` deixa o job seguir, e
+      # sem esta condição o upload tentaria anexar um arquivo que não existe.
+      - name: publica a janela
+        if: steps.janela.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: gh release upload "${GITHUB_REF_NAME}" "${{ matrix.asset_gui }}" --clobber
