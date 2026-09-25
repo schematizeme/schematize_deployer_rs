@@ -152,6 +152,9 @@ CMD schematize-deployer vps probe
 CMD schematize-deployer vps rm
   SOBRE Remove um host do registro. A trilha de auditoria dele PERMANECE
   ARG alias                 OBRIGATORIO
+CMD schematize-deployer vps shell
+  SOBRE Abre uma SESSÃO INTERATIVA no host, num terminal do sistema
+  ARG alias                 OBRIGATORIO
 CMD schematize-deployer vps trust
   SOBRE Mostra a fingerprint da host key e, com --sim, passa a confiar nela (fim do TOFU cego)
   ARG alias                 OBRIGATORIO
