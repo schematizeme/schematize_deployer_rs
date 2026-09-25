@@ -47,6 +47,8 @@
   "cli.panel.what_you_can_do": "WHAT YOU CAN DO\n  deployer ssh list          managed keys\n  deployer vps list          registered servers\n  deployer dns zones         domains on Cloudflare\n  deployer --help            everything",
   "cli.ssh.entropy": "entropy: {note}",
   "cli.ssh.installed": "public key '{name}' installed on {target}:~/.ssh/authorized_keys",
+  "cli.ssh.orphan_header": "{n} private key(s) WITHOUT the public pair — that is why they are not listed above:",
+  "cli.ssh.orphan_why": "  There is no registry: the folder is the source of truth. The listing enumerates the `.pub` files because the private key is never read — without the public pair there is nothing to list. Run the command above to derive it.",
   "cli.ssh.proof": "proof (ssh-keygen -l): {proof}",
   "cli.ssh.test_access": "test the access: schematize ssh run {name} {target} -- 'echo ok'",
   "cli.vault.absent": "vault: does not exist yet (create it with `deployer vault init`)",

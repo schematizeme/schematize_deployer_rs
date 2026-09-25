@@ -220,6 +220,86 @@ pub(crate) fn read_info(name: &str) -> Result<KeyInfo, String> {
     })
 }
 
+/// Arquivos de `~/.ssh` que NÃO são chave, e por isso não contam como privada órfã.
+///
+/// **Onde:** [`orfas`]. A lista é por NOME porque o critério não pode ser "abrir e ver o que
+/// tem dentro": a regra da casa é que a privada nunca é lida, e ler o cabeçalho para
+/// classificar já seria ler.
+const NAO_SAO_CHAVE: &[&str] = &[
+    "config",
+    "known_hosts",
+    "known_hosts.old",
+    "authorized_keys",
+    "authorized_keys2",
+    "environment",
+    "rc",
+    "agent.env",
+];
+
+/// **O quê:** chaves privadas em `~/.ssh` que estão SEM o `.pub` ao lado.
+///
+/// **Onde:** `ssh list` (a seção de aviso) e o `--json`, que a janela lê.
+///
+/// ## Por que isto existe — um relato, não uma hipótese
+///
+/// Alguém copiou uma chave para `~/.ssh` à mão e **nenhum software da casa a via**. Não havia
+/// erro, não havia aviso: ela simplesmente não estava na lista. A pergunta que chegou foi
+/// *"tem que cadastrar as chaves em algum lugar? não é só botar o arquivo na pasta?"*
+///
+/// **É só botar o arquivo na pasta** — não há cadastro nenhum, a pasta É a fonte da verdade.
+/// O que faltava era o par público: a [`list`] enumera os `*.pub`, porque a privada nunca é
+/// lida, e sem `.pub` não há o que enumerar.
+///
+/// O desenho está certo e a consequência estava errada. Ficar invisível **em silêncio** é o
+/// §37.48: edge case que um leigo atinge é bug do software, não erro do usuário. Agora a
+/// ausência é RELATADA, com o comando que a conserta.
+///
+/// **Continua sem ler a privada:** o critério é a existência do arquivo e a AUSÊNCIA do
+/// `<nome>.pub` irmão. Nada é aberto.
+pub fn orfas() -> Vec<String> {
+    let dir = ssh_dir();
+    let Ok(entries) = fs::read_dir(&dir) else { return Vec::new() };
+    let nomes: Vec<String> = entries
+        .flatten()
+        .filter(|e| e.path().is_file())
+        .filter_map(|e| e.file_name().to_str().map(String::from))
+        .collect();
+    orfas_de(&nomes)
+}
+
+/// **O quê:** a decisão de quais nomes são privadas órfãs, como função PURA.
+///
+/// **Onde:** [`orfas`], que só lê o diretório; e os testes.
+///
+/// **Separada do disco de propósito:** testar a versão que lê `~/.ssh` exigiria mexer no `HOME`
+/// do processo, que é estado GLOBAL — e os testes de Rust rodam em paralelo, roubando-o uns dos
+/// outros. É a mesma razão pela qual o `resolver_home` do `util` existe.
+pub fn orfas_de(nomes: &[String]) -> Vec<String> {
+    let tem = |n: &str| nomes.iter().any(|x| x == n);
+    let mut out: Vec<String> = nomes
+        .iter()
+        .filter(|n| !n.ends_with(".pub"))
+        .filter(|n| !NAO_SAO_CHAVE.contains(&n.as_str()))
+        .filter(|n| !n.starts_with('.'))
+        .filter(|n| valid_name(n).is_ok())
+        // O par público existe? Se existe, a chave já aparece na `list` e não é órfã.
+        .filter(|n| !tem(&format!("{n}.pub")))
+        .cloned()
+        .collect();
+    out.sort();
+    out
+}
+
+/// **O quê:** o comando que deriva o `.pub` de uma privada órfã.
+///
+/// **Onde:** a mensagem de `ssh list` e o `--json`.
+///
+/// **A janela mostra e o terminal roda:** derivar pede a passphrase se a chave for cifrada, e
+/// passphrase não passa pela janela (D5).
+pub fn comando_para_derivar(nome: &str) -> String {
+    format!("ssh-keygen -y -f ~/.ssh/{nome} > ~/.ssh/{nome}.pub")
+}
+
 /// Lista as chaves em `~/.ssh` varrendo os `*.pub`. NUNCA lê/expõe a privada.
 pub fn list() -> Vec<KeyInfo> {
     let dir = ssh_dir();
@@ -269,4 +349,84 @@ pub fn remove(name: &str) -> Result<(), String> {
 /// Público pra a GUI/deploy referenciarem a chave por caminho, SEM nunca ler seu conteúdo.
 pub fn key_path(name: &str) -> Result<PathBuf, String> {
     private_path(name)
+}
+
+#[cfg(test)]
+mod tests_orfas {
+    use super::orfas_de;
+
+    fn v(xs: &[&str]) -> Vec<String> {
+        xs.iter().map(|s| s.to_string()).collect()
+    }
+
+    /// **O CASO RELATADO.** Uma chave copiada à mão para `~/.ssh`, sem o `.pub`, sumia da lista
+    /// sem erro nenhum — e a pergunta que chegou foi *"tem que cadastrar em algum lugar?"*.
+    #[test]
+    fn privada_sem_pub_e_orfa() {
+        let dir = v(&[
+            "config",
+            "known_hosts",
+            "github_lucassa64",
+            "github_lucassa64.pub",
+            "id_ed25519",
+            "id_ed25519.pub",
+            "ssh_fast", // ← copiada à mão, sem par
+        ]);
+        assert_eq!(orfas_de(&dir), ["ssh_fast"]);
+    }
+
+    /// Chave COM par não é órfã — senão o aviso apareceria para todo mundo, sempre, e um aviso
+    /// que aparece sempre é um aviso que ninguém lê.
+    #[test]
+    fn chave_com_par_nao_e_orfa() {
+        assert!(orfas_de(&v(&["id_ed25519", "id_ed25519.pub"])).is_empty());
+    }
+
+    /// **Os arquivos de configuração do OpenSSH NÃO são chave.**
+    ///
+    /// `config`, `known_hosts` e `authorized_keys` moram em `~/.ssh`, não têm `.pub` e não são
+    /// chave nenhuma. Sem esta lista, TODA máquina veria um aviso falso — e o aviso perderia o
+    /// sentido no primeiro uso.
+    #[test]
+    fn arquivos_do_openssh_nao_sao_chave() {
+        let dir = v(&[
+            "config",
+            "known_hosts",
+            "known_hosts.old",
+            "authorized_keys",
+            "authorized_keys2",
+            "environment",
+            "rc",
+            "agent.env",
+        ]);
+        assert!(orfas_de(&dir).is_empty(), "achou órfã onde não há chave: {:?}", orfas_de(&dir));
+    }
+
+    /// Arquivo oculto não conta: `.DS_Store`, `.gitignore` e afins aparecem em `~/.ssh` e não
+    /// são chave de ninguém.
+    #[test]
+    fn arquivo_oculto_nao_conta() {
+        assert!(orfas_de(&v(&[".DS_Store", ".gitignore", ".keep"])).is_empty());
+    }
+
+    /// Nome que o domínio recusa não vira órfã — senão o comando sugerido seria um comando que
+    /// o próprio CLI rejeita depois.
+    #[test]
+    fn nome_invalido_nao_vira_orfa() {
+        assert!(orfas_de(&v(&["chave com espaço", "-comeca-com-hifen", "tem/barra"])).is_empty());
+    }
+
+    /// Várias órfãs saem ordenadas — a saída é lida por gente, e ordem estável evita que duas
+    /// execuções pareçam ter mudado alguma coisa.
+    #[test]
+    fn varias_orfas_saem_ordenadas() {
+        assert_eq!(orfas_de(&v(&["zeta", "alfa", "meio"])), ["alfa", "meio", "zeta"]);
+    }
+
+    /// O `.pub` sozinho (sem privada) NÃO é órfã — é o caso de quem só tem a pública de um
+    /// terceiro. Ele já aparece na `list`, que é quem enumera os `.pub`.
+    #[test]
+    fn pub_sozinho_nao_e_orfa() {
+        assert!(orfas_de(&v(&["de_terceiro.pub"])).is_empty());
+    }
 }

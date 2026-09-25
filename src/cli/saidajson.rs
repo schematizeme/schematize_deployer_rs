@@ -125,11 +125,34 @@ fn linha_chave(k: &KeyInfo) -> String {
 }
 
 /// **O quê:** imprime as chaves em JSON. **Onde:** `schematize-deployer ssh list --json`.
-pub(crate) fn ssh_list(chaves: &[KeyInfo]) {
+pub(crate) fn ssh_list(chaves: &[KeyInfo], orfas: &[String]) {
     println!("{{");
     println!("  \"deployer\": \"{}\",", env!("CARGO_PKG_VERSION"));
     print!("  \"keys\": ");
     lista(&chaves.iter().map(linha_chave).collect::<Vec<_>>());
+    // **`orphans` é campo próprio, e não uma chave com campos em branco.**
+    //
+    // Uma privada sem `.pub` não tem fingerprint, nem tipo, nem comentário — tudo isso sai do
+    // arquivo público, e ele não existe. Enfiá-la na lista de `keys` com os campos vazios faria
+    // a janela desenhar uma linha que parece chave quebrada, quando o que há é uma chave
+    // INTEIRA à qual falta um arquivo derivável.
+    //
+    // São dois estados diferentes, e o contrato os separa. O `comando` vai junto porque a
+    // janela mostra e o terminal roda: derivar pede a passphrase se a chave for cifrada.
+    println!(",");
+    print!("  \"orphans\": ");
+    lista(
+        &orfas
+            .iter()
+            .map(|n| {
+                format!(
+                    "    {{\"name\": \"{}\", \"command\": \"{}\"}}",
+                    esc(n),
+                    esc(&deployer::sshkeys::comando_para_derivar(n))
+                )
+            })
+            .collect::<Vec<_>>(),
+    );
     println!("}}");
 }
 

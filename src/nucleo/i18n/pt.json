@@ -47,6 +47,8 @@
   "cli.panel.what_you_can_do": "O QUE DÁ PARA FAZER\n  deployer ssh list          chaves gerenciadas\n  deployer vps list          servidores registrados\n  deployer dns zones         domínios na Cloudflare\n  deployer --help            tudo",
   "cli.ssh.entropy": "entropia: {note}",
   "cli.ssh.installed": "chave pública '{name}' instalada em {target}:~/.ssh/authorized_keys",
+  "cli.ssh.orphan_header": "{n} chave(s) privada(s) SEM o par público — por isso não aparecem acima:",
+  "cli.ssh.orphan_why": "  Não há cadastro: a pasta é a fonte da verdade. A listagem enumera os `.pub` porque a chave privada nunca é lida — sem o par público, não há o que listar. Rode o comando acima para derivá-lo.",
   "cli.ssh.proof": "prova (ssh-keygen -l): {proof}",
   "cli.ssh.test_access": "teste o acesso: schematize ssh run {name} {target} -- 'echo ok'",
   "cli.vault.absent": "cofre: não existe ainda (crie com `deployer vault init`)",

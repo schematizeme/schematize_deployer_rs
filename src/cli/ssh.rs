@@ -101,20 +101,36 @@ pub(crate) fn ssh_cmd(sub: SshCmd) -> Result<(), String> {
         }
         SshCmd::List { json } => {
             let keys = sshkeys::list();
+            // As privadas SEM `.pub` ao lado. Elas não aparecem na `list` — a enumeração é por
+            // `*.pub`, porque a privada nunca é lida — e ficavam invisíveis EM SILÊNCIO.
+            let orfas = sshkeys::orfas();
             // O JSON vem ANTES do caminho de lista vazia: `[]` é o que a tela de chaves de
             // quem ainda não tem nenhuma precisa para desenhar "nenhuma chave ainda". Uma
             // frase humana ali tornaria o documento inválido.
             if json {
-                super::saidajson::ssh_list(&keys);
+                super::saidajson::ssh_list(&keys, &orfas);
                 return Ok(());
             }
-            if keys.is_empty() {
+            if keys.is_empty() && orfas.is_empty() {
                 println!("{}", t("ssh.list_empty"));
                 return Ok(());
             }
-            println!("{}", t("ssh.list_header"));
-            for k in keys {
-                println!("  {:<20} {:<8} {}  {}", k.name, k.kind, k.fingerprint, k.comment);
+            if !keys.is_empty() {
+                println!("{}", t("ssh.list_header"));
+                for k in keys {
+                    println!("  {:<20} {:<8} {}  {}", k.name, k.kind, k.fingerprint, k.comment);
+                }
+            }
+            // O aviso vem DEPOIS da lista, e não no lugar dela: quem tem chave funcionando
+            // precisa ver a lista primeiro. E vem sempre que há órfã, mesmo com a lista cheia.
+            if !orfas.is_empty() {
+                println!();
+                println!("{}", tf("cli.ssh.orphan_header", &[("n", &orfas.len().to_string())]));
+                for nome in &orfas {
+                    println!("  {nome}");
+                    println!("    {}", sshkeys::comando_para_derivar(nome));
+                }
+                println!("{}", t("cli.ssh.orphan_why"));
             }
             Ok(())
         }
