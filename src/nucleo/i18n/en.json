@@ -96,6 +96,7 @@
   "cli.vps.push_catalog": "run `schematize vps bootstrap {alias}` to push the catalogue to the host.",
   "cli.vps.registered": "host {alias} registered ({env} · {host}:{port})",
   "cli.vps.removed": "host {alias} removed. Its audit trail stays in `schematize vps logs {plain}`.",
+  "cli.vps.shell_opened": "session opened in the terminal for `{alias}`.",
   "cli.vps.trail_lines": "{count} line(s) · append-only trail, already redacted",
   "cli.vps.unchanged": "nothing changed.",
   "cli.vps.unchanged_untrusted": "nothing changed — the host remains untrusted.",

@@ -96,6 +96,7 @@
   "cli.vps.push_catalog": "rode `schematize vps bootstrap {alias}` pra empurrar o catálogo pro host.",
   "cli.vps.registered": "host {alias} registrado ({env} · {host}:{port})",
   "cli.vps.removed": "host {alias} removido. A trilha de auditoria dele continua em `schematize vps logs {plain}`.",
+  "cli.vps.shell_opened": "sessão aberta no terminal para `{alias}`.",
   "cli.vps.trail_lines": "{count} linha(s) · trilha append-only, já redigida",
   "cli.vps.unchanged": "nada mudou.",
   "cli.vps.unchanged_untrusted": "nada mudou — o host segue não confiado.",

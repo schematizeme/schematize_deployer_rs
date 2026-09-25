@@ -181,7 +181,7 @@ fn shell(alias: &str) -> Result<(), String> {
     let conn = vps::db::open()?;
     let p = vps::buscar(&conn, alias)?.ok_or_else(|| host_ausente(alias))?;
     vps::conexao::abrir_no_terminal(&p)?;
-    println!("sessão aberta no terminal para `{alias}`.");
+    println!("{}", tf("cli.vps.shell_opened", &[("alias", alias)]));
     Ok(())
 }
 
