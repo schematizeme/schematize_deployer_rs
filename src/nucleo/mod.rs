@@ -26,6 +26,7 @@ pub mod config;
 pub mod desktop;
 pub mod i18n;
 pub mod icone;
+pub mod procedencia;
 pub mod redacao;
 pub mod settings;
 pub mod util;

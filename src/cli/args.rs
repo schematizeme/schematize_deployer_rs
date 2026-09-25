@@ -20,7 +20,10 @@ use clap::{Parser, Subcommand};
 #[derive(Parser)]
 #[command(
     name = "schematize-deployer",
-    version,
+    // `version = <fn>` e nao `version` puro: o numero sozinho nao distingue dois
+    // binarios com o mesmo `Cargo.toml` e comportamento diferente — foi assim que um
+    // binario de 15 dias atras passou por novo e gravou o `.desktop` errado.
+    version = deployer::nucleo::procedencia::rotulo_versao(),
     about = "schematize deployer — SSH keys, VPS and audited remote access",
     long_about = "Opera servidor com credencial fora do alcance do agente.\n\
                   Funciona sozinho; integra-se ao schematize quando os dois convivem."
