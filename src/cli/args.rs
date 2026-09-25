@@ -298,6 +298,13 @@ pub(crate) enum VpsCmd {
         #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
         comando: Vec<String>,
     },
+    /// Abre uma SESSÃO INTERATIVA no host, num terminal do sistema.
+    ///
+    /// É o caminho do HUMANO, e por isso não passa pela política nem pela auditoria de
+    /// comando: não há comando a auditar. O que se registra é a ABERTURA da sessão; o que a
+    /// pessoa digita lá é responsabilidade dela. Pelo mesmo motivo, o agente não tem este
+    /// verbo — ele fala por `exec`, que é auditável (ADR-0005).
+    Shell { alias: String },
     /// Mostra o que já rodou (alias vazio = todos os hosts).
     Logs {
         #[arg(default_value = "")]

@@ -51,6 +51,7 @@ pub(crate) fn vps_cmd(sub: VpsCmd) -> Result<(), String> {
         VpsCmd::List { json } => listar(json),
         VpsCmd::Trust { alias, sim } => confiar(&alias, sim),
         VpsCmd::Exec { alias, confirmar, comando } => executar(&alias, confirmar, &comando),
+        VpsCmd::Shell { alias } => shell(&alias),
         VpsCmd::Logs { alias, n, transcript } => logs(&alias, n, transcript),
         VpsCmd::Policy { alias, modo, env } => politica(&alias, modo, env),
         VpsCmd::Authorize { alias } => autorizar(&alias),
@@ -162,6 +163,28 @@ fn confiar(alias: &str, sim: bool) -> Result<(), String> {
 }
 
 /// Roda um comando no host.
+/// **O quê:** abre uma sessão interativa no host, num terminal do sistema.
+///
+/// **Onde:** `vps shell <alias>`, e o botão «Conectar» da janela do deployer.
+///
+/// ## Este comando existia pela metade, e é o defeito que ele conserta
+///
+/// A função [`vps::conexao::abrir_no_terminal`] está no repo desde a F3, com o doc dizendo que
+/// é chamada por `schematize vps shell`. **Esse subcomando nunca foi criado** — provavelmente
+/// se perdeu quando o deployer saiu do hub (ADR-0010). O resultado é que a janela não tinha
+/// comando nenhum para «Conectar», e montava `vps exec <alias>` sem comando, que falha com
+/// *"faltou o comando"*.
+///
+/// Função viva sem quem a chame é código morto que PARECE entregue — e o doc dela afirmava uma
+/// ponta que não existia.
+fn shell(alias: &str) -> Result<(), String> {
+    let conn = vps::db::open()?;
+    let p = vps::buscar(&conn, alias)?.ok_or_else(|| host_ausente(alias))?;
+    vps::conexao::abrir_no_terminal(&p)?;
+    println!("sessão aberta no terminal para `{alias}`.");
+    Ok(())
+}
+
 fn executar(alias: &str, confirmar: bool, comando: &[String]) -> Result<(), String> {
     if comando.is_empty() {
         return Err(format!(
