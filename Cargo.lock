@@ -745,11 +745,16 @@ dependencies = [
  "png",
  "rpassword",
  "rusqlite",
+ "schematize_plataforma",
  "serde",
  "serde_json",
  "ureq",
  "zeroize",
 ]
+
+[[package]]
+name = "schematize_plataforma"
+version = "0.2.0"
 
 [[package]]
 name = "serde"
