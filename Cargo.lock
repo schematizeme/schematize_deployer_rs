@@ -735,7 +735,7 @@ dependencies = [
 
 [[package]]
 name = "schematize-deployer"
-version = "0.9.3"
+version = "0.9.4"
 dependencies = [
  "argon2",
  "chacha20poly1305",
