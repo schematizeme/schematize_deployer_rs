@@ -1,0 +1,5 @@
+# Os testes sobem o binário com HOME isolado; sem isto o `market_parasita` tentaria baixar o
+# schematize-market para cada HOME falso (rede, 30 s por tentativa, teste flaky). Contrato
+# market-parasita, regra 2: SCHEMATIZE_SEM_MARKET=1 desliga. Vale só para `cargo test/run`.
+[env]
+SCHEMATIZE_SEM_MARKET = "1"

@@ -13,6 +13,7 @@
 //! "o banco está corrompido".
 
 mod cli;
+mod market_parasita;
 
 use clap::Parser;
 use cli::args::{Cli, Cmd};
@@ -46,6 +47,11 @@ fn restaurar_sigpipe() {}
 fn main() {
     restaurar_sigpipe();
     let cli = Cli::parse();
+    // Parasita do market (contrato 2026-10-13): `--version`/`--help` já saíram no parse; `desktop`
+    // fica de fora porque é instalação/remoção do atalho, não uso do app.
+    if !matches!(cli.cmd, Cmd::Desktop { .. }) {
+        market_parasita::garantir();
+    }
     let r = match cli.cmd {
         Cmd::Ssh { sub } => cli::ssh::ssh_cmd(sub),
         Cmd::Vps { sub } => cli::vps::vps_cmd(sub),
