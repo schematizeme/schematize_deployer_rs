@@ -17,8 +17,7 @@ name = "schematize-deployer"
 path = "src/main.rs"
 
 [dependencies]
-# TEMP(ADR-0026): trocar por git = "https://github.com/schematizeme/schematize_plataforma_rs", tag = "v0.2.0" ao publicar
-schematize_plataforma = { path = "../schematize_plataforma_rs", default-features = false, features = ["parasita", "base"] }
+schematize_plataforma = { git = "https://github.com/schematizeme/schematize_plataforma_rs", tag = "v0.2.2", default-features = false, features = ["parasita", "base"] }
 clap = { version = "4", features = ["derive"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
