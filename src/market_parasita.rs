@@ -72,12 +72,12 @@ pub fn o_que_falta(pasta: &Path) -> Vec<&'static str> {
 
 /// **O quê:** URL do asset de `nome` para `os`/`arch`, ou `None` se a plataforma não tem asset.
 ///
-/// **Onde:** instalação de cada binário. Publicados: linux-x86_64, macos-x86_64, macos-arm64,
+/// **Onde:** instalação de cada binário. Publicados: linux-x86_64, freebsd-x86_64, macos-x86_64, macos-arm64,
 /// windows-x86_64.
 pub fn url_do_asset(nome: &str, os: &str, arch: &str) -> Option<String> {
     let publicado = matches!(
         (os, arch),
-        ("linux", "x86_64") | ("macos", "x86_64" | "arm64") | ("windows", "x86_64")
+        ("linux" | "freebsd", "x86_64") | ("macos", "x86_64" | "arm64") | ("windows", "x86_64")
     );
     if !publicado {
         return None;
@@ -416,6 +416,20 @@ mod testes {
             url_do_asset("schematize-market-gui", "windows", "x86_64"),
             Some(format!("{b}/schematize-market-gui-windows-x86_64.exe"))
         );
+    }
+
+    #[test]
+    fn freebsd_x86_64_tem_asset_e_arm64_nao() {
+        let b = "https://github.com/schematizeme/schematize_market_rs/releases/latest/download";
+        assert_eq!(
+            url_do_asset("schematize-market", "freebsd", "x86_64"),
+            Some(format!("{b}/schematize-market-freebsd-x86_64"))
+        );
+        assert_eq!(
+            url_do_asset("schematize-market-gui", "freebsd", "x86_64"),
+            Some(format!("{b}/schematize-market-gui-freebsd-x86_64"))
+        );
+        assert_eq!(url_do_asset("schematize-market", "freebsd", "arm64"), None);
     }
 
     #[test]

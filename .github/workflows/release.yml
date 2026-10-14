@@ -165,3 +165,83 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: gh release upload "${GITHUB_REF_NAME}" "${{ matrix.asset_gui }}" --clobber
+
+  # FreeBSD x86_64 — job PRÓPRIO: o runner não é FreeBSD, e `fail-fast` da matriz `binarios`
+  # nem se aplica aqui. FreeBSD falhar NÃO cancela os outros assets (e o contrário também).
+  # O binário TEM de executar num FreeBSD de verdade antes de ser publicado: um asset que baixa
+  # com HTTP 200 e não executa só falha na máquina de quem instalou. Por isso o smoke
+  # (`--version` numa VM FreeBSD 14.2) é parte do release, não enfeite.
+  # Tudo PINADO: a VM por SHA de commit (tag v1.5.9) e o release do FreeBSD fixo.
+  build-freebsd:
+    needs: criar
+    runs-on: ubuntu-latest
+    env:
+      ASSET: schematize-deployer-freebsd-x86_64
+      ASSET_GUI: schematize-deployer-gui-freebsd-x86_64
+    steps:
+      - uses: actions/checkout@v4
+      - name: cross 0.2.5 (versão pinada)
+        run: |
+          set -euo pipefail
+          rustup target add x86_64-unknown-freebsd
+          curl -fsSL https://github.com/cross-rs/cross/releases/download/v0.2.5/cross-x86_64-unknown-linux-gnu.tar.gz \
+            | tar -xz -C "$RUNNER_TEMP"
+          "$RUNNER_TEMP/cross" --version
+      - name: Build (release, cross)
+        run: |
+          set -euo pipefail
+          "$RUNNER_TEMP/cross" build --release --locked --target x86_64-unknown-freebsd --bin schematize-deployer
+          cp target/x86_64-unknown-freebsd/release/schematize-deployer "$ASSET"
+      # O binário TEM de executar num FreeBSD de verdade antes de ser publicado.
+      - name: O asset executa? (VM FreeBSD)
+        uses: vmactions/freebsd-vm@c46abacb49f09938ca4e1702d15d836285d694cc # v1.5.9
+        with:
+          envs: "ASSET"
+          release: "14.2"
+          usesh: true
+          copyback: false
+          run: |
+            set -eu
+            uname -sr
+            [ "$(uname -s)" = "FreeBSD" ]
+            chmod +x ./$ASSET
+            out="$(SCHEMATIZE_SEM_MARKET=1 ./$ASSET --version)"
+            echo "$out"
+            case "$out" in
+              schematize-deployer\ *) ;;
+              *) echo "saída de --version inesperada: $out" >&2; exit 1 ;;
+            esac
+      # A JANELA, best-effort como nos outros alvos: compilada NATIVAMENTE dentro da VM (o Slint
+      # precisa das libs X11/GL do FreeBSD, que a imagem do `cross` não tem). Se não compilar, o
+      # release NÃO falha — o CLI é o que precisa chegar.
+      - name: Janela do deployer (opcional, VM FreeBSD)
+        id: janela
+        continue-on-error: true
+        timeout-minutes: 60
+        uses: vmactions/freebsd-vm@c46abacb49f09938ca4e1702d15d836285d694cc # v1.5.9
+        with:
+          envs: "ASSET_GUI"
+          release: "14.2"
+          usesh: true
+          copyback: true
+          prepare: |
+            pkg install -y rust git curl pkgconf libX11 libXcursor libXrandr libXi \
+              libxkbcommon wayland mesa-libs libxcb fontconfig dejavu
+          run: |
+            set -eu
+            git clone --depth 1 https://github.com/schematizeme/schematize_deployer_gui_rs.git /tmp/janela
+            CARGO_TARGET_DIR=/tmp/janela-target cargo build --release --locked \
+              --manifest-path /tmp/janela/Cargo.toml
+            cp /tmp/janela-target/release/schematize-deployer-gui ./$ASSET_GUI
+            test -s ./$ASSET_GUI
+
+      - name: publica
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${GITHUB_REF_NAME}" "$ASSET" --clobber
+
+      - name: publica a janela
+        if: steps.janela.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${GITHUB_REF_NAME}" "$ASSET_GUI" --clobber
